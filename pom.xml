@@ -24,6 +24,7 @@
 			<artifactId>org.apache.felix.framework</artifactId>
 			<version>5.4.0</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.apache.cxf.dosgi</groupId>
 			<artifactId>cxf-dosgi-ri-discovery-local</artifactId>
@@ -72,6 +73,11 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>org.apache.cxf.dosgi</groupId>
+			<artifactId>cxf-dosgi-ri-dsw-cxf</artifactId>
+			<version>1.7.0</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<pluginManagement>

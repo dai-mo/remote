@@ -12,8 +12,7 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.test.TestingServer;
 import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils;
-import org.apache.zookeeper.CreateMode;
-import org.apache.zookeeper.ZooDefs;
+import org.dcs.api.service.TestService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -56,8 +55,9 @@ public class ZookeeperWSDLTest {
 			Assert.assertEquals(expected, nodeData);
 
 			tracker = new ZooKeeperServiceTracker();
-			Object obj = tracker.getService(TEST_SERVICE_NAME);		
-
+			Object obj = tracker.getService(TestService.class);		
+			Assert.assertNotNull(obj);
+			Assert.assertTrue(obj instanceof TestService);
 			String zooKeeperServicePath = Utils.getZooKeeperPath(TEST_SERVICE_NAME);
 			List<String> serviceNodes = client.getChildren().forPath(zooKeeperServicePath);	
 
@@ -66,13 +66,13 @@ public class ZookeeperWSDLTest {
 			}
 
 			logger.warn("Waiting for service node delete to be triggered");
-			Thread.sleep(5000);
-			Assert.assertNull(tracker.getService(TEST_SERVICE_NAME));
+			Thread.sleep(2000);
+			Assert.assertNull(tracker.getService(TestService.class));
 			
 			client.create().creatingParentsIfNeeded().forPath(TEST_SERVICE_PATH, bytes);
 			logger.warn("Waiting for service node add to be triggered");
-			Thread.sleep(5000);
-			Assert.assertNotNull(tracker.getService(TEST_SERVICE_NAME));
+			Thread.sleep(2000);
+			Assert.assertNotNull(tracker.getService(TestService.class));
 
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -20,17 +20,26 @@ public class CxfEndpointListener implements EndpointListener {
 
 	@Override
 	public void endpointAdded(EndpointDescription endpoint, String matchedFilter) {
-		String address = CxfEndpointUtils.getAddress(endpoint);
-		Object serviceObject = WSDLToJava.toServiceObject(address);
-		String[] serviceNames = (String[])endpoint.getProperties().get("objectClass");
-		for(String serviceName: serviceNames) {
-			List<Object> serviceObjects = serviceObjectMap.get(serviceName);
-			if(serviceObjects == null) {
-				serviceObjects = new ArrayList<>();
-				serviceObjectMap.put(serviceName, serviceObjects);
+		String address = CxfEndpointUtils.getAddress(endpoint);		
+		try {
+
+			String[] serviceNames = (String[])endpoint.getProperties().get("objectClass");
+			for(String serviceName: serviceNames) {
+				if(serviceObjectMap.containsKey(serviceName)) {
+					List<Object> serviceObjects = serviceObjectMap.get(serviceName);
+					if(serviceObjects == null) {
+						serviceObjects = new ArrayList<>();
+						serviceObjectMap.put(serviceName, serviceObjects);
+					}
+					Object serviceProxy = WSDLToJava.createProxy(Class.forName(serviceName), endpoint);
+					serviceObjects.add(serviceProxy);
+				}
 			}
-			serviceObjects.add(serviceObject);
+		} catch (ClassNotFoundException e) {
+			throw new IllegalStateException(e);
 		}
+
+
 		logger.warn("Added endpoint with cxf address : " + address);
 
 	}
@@ -38,9 +47,11 @@ public class CxfEndpointListener implements EndpointListener {
 	@Override
 	public void endpointRemoved(EndpointDescription endpoint, String matchedFilter) {
 		String address = (String)endpoint.getProperties().get("org.apache.cxf.ws.address");
-		String[] services = (String[])endpoint.getProperties().get("objectClass");
-		for(String service: services) {
-			serviceObjectMap.put(service, new ArrayList<>());
+		String[] serviceNames = (String[])endpoint.getProperties().get("objectClass");
+		for(String serviceName: serviceNames) {
+			if(serviceObjectMap.containsKey(serviceName)) {
+			serviceObjectMap.put(serviceName, new ArrayList<>());
+			}
 		}
 		logger.warn("Removed endpoint with cxf address : " + address);
 	}

@@ -34,7 +34,8 @@ public class ZooKeeperServiceTracker {
 
 	}
 
-	public synchronized Object getService(String serviceName) throws Exception {
+	public synchronized Object getService(Class<?> serviceClass) throws Exception {
+		String serviceName = serviceClass.getName();
 
 		// First check if the service is currently available ... 
 		List<Object> serviceObjects = serviceObjectMap.get(serviceName);
@@ -58,7 +59,7 @@ public class ZooKeeperServiceTracker {
 			for(String serviceNode : serviceNodes) {				
 				byte[] data = curatorClient.getData().forPath(zooKeeperServicePath + "/" + serviceNode);				
 				EndpointDescription firstEnpointDescription = interfaceMonitor.getFirstEnpointDescription(data);
-				Object serviceObject =  WSDLToJava.toServiceObject(CxfEndpointUtils.getAddress(firstEnpointDescription));	
+				Object serviceObject =  WSDLToJava.createProxy(serviceClass, firstEnpointDescription);	
 				serviceObjects.add(serviceObject);				
 				
 			}
