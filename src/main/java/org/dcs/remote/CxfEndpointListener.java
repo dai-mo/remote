@@ -12,48 +12,52 @@ import org.slf4j.LoggerFactory;
 public class CxfEndpointListener implements EndpointListener {
 	private static final Logger logger = LoggerFactory.getLogger(CxfEndpointListener.class);
 
-	private final ConcurrentHashMap<String, List<Object>> serviceObjectMap;
+	private final ConcurrentHashMap<String, List<CxfServiceEndpoint>> serviceEndpointMap;
 
-	public CxfEndpointListener(ConcurrentHashMap<String, List<Object>> serviceObjectMap) {
-		this.serviceObjectMap = serviceObjectMap;
+	public CxfEndpointListener(ConcurrentHashMap<String, List<CxfServiceEndpoint>> serviceEndpointMap) {
+		this.serviceEndpointMap = serviceEndpointMap;
 	}
 
 	@Override
 	public void endpointAdded(EndpointDescription endpoint, String matchedFilter) {
-		String address = CxfEndpointUtils.getAddress(endpoint);		
 		try {
-
-			String[] serviceNames = (String[])endpoint.getProperties().get("objectClass");
+			String[] serviceNames = CxfEndpointUtils.getServiceInterfaceNames(endpoint);
 			for(String serviceName: serviceNames) {
-				if(serviceObjectMap.containsKey(serviceName)) {
-					List<Object> serviceObjects = serviceObjectMap.get(serviceName);
-					if(serviceObjects == null) {
-						serviceObjects = new ArrayList<>();
-						serviceObjectMap.put(serviceName, serviceObjects);
-					}
-					Object serviceProxy = WSDLToJava.createProxy(Class.forName(serviceName), endpoint);
-					serviceObjects.add(serviceProxy);
+				List<CxfServiceEndpoint> serviceEndpoints = serviceEndpointMap.get(serviceName);
+				if(serviceEndpoints == null) {
+					serviceEndpoints = new ArrayList<>();
+					serviceEndpointMap.put(serviceName, serviceEndpoints);
 				}
+				Object serviceProxy = CxfWSDLUtils.createProxy(Class.forName(serviceName), endpoint);
+				CxfServiceEndpoint serviceEndpoint = new CxfServiceEndpoint(endpoint, serviceProxy);
+				serviceEndpoints.add(serviceEndpoint);
+				logger.warn("Added service proxy / impl : " + serviceName + "/ " + serviceEndpoint.getServiceProxyImplName());
 			}
 		} catch (ClassNotFoundException e) {
 			throw new IllegalStateException(e);
 		}
-
-
-		logger.warn("Added endpoint with cxf address : " + address);
-
 	}
 
 	@Override
 	public void endpointRemoved(EndpointDescription endpoint, String matchedFilter) {
-		String address = (String)endpoint.getProperties().get("org.apache.cxf.ws.address");
-		String[] serviceNames = (String[])endpoint.getProperties().get("objectClass");
+		String[] serviceNames = CxfEndpointUtils.getServiceInterfaceNames(endpoint);
 		for(String serviceName: serviceNames) {
-			if(serviceObjectMap.containsKey(serviceName)) {
-			serviceObjectMap.put(serviceName, new ArrayList<>());
+			List<CxfServiceEndpoint> serviceEndpoints = serviceEndpointMap.get(serviceName);
+			if(serviceEndpoints != null) {
+				CxfServiceEndpoint serviceEndpointToDelete = null;
+				for(CxfServiceEndpoint serviceEndpoint: serviceEndpoints) {
+					String serviceProxyImplName = CxfEndpointUtils.generateServiceProxyImplName(endpoint);
+					if(serviceProxyImplName.equals(serviceEndpoint.getServiceProxyImplName())) {
+						serviceEndpointToDelete = serviceEndpoint;
+						break;
+					}
+				}
+				if(serviceEndpointToDelete != null) {
+					serviceEndpoints.remove(serviceEndpointToDelete);
+					logger.warn("Removing service proxy / impl : " + serviceName + "/ " + serviceEndpointToDelete.getServiceProxyImplName());
+				}
 			}
-		}
-		logger.warn("Removed endpoint with cxf address : " + address);
+		}		
 	}
 
 }

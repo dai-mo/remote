@@ -13,6 +13,7 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.curator.test.TestingServer;
 import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils;
 import org.dcs.api.service.TestService;
+import org.dcs.api.service.TestServiceImpl;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,10 +27,15 @@ public class ZookeeperWSDLTest {
 	private static final Logger logger = LoggerFactory.getLogger(ZookeeperWSDLTest.class);
 	private static TestingServer zkTestServer;
 
-	private static final String TEST_SERVICE_PATH = 
-			"/osgi/service_registry/org/dcs/api/service/TestService/localhost#9000##org#dcs#api#service#TestService";
-	
+	private static final String A_TEST_SERVICE_PATH = 
+			"/osgi/service_registry/org/dcs/api/service/TestService/localhost#9000##org#dcs#api#service#impl#ATestServiceImpl";
+
+	private static final String B_TEST_SERVICE_PATH = 
+			"/osgi/service_registry/org/dcs/api/service/TestService/localhost#9000##org#dcs#api#service#impl#BTestServiceImpl";
+
 	private static final String TEST_SERVICE_NAME = "org.dcs.api.service.TestService";
+	private static final String A_TEST_SERVICE_IMPL_NAME = "org.dcs.api.service.impl.ATestServiceImpl";
+	private static final String B_TEST_SERVICE_IMPL_NAME = "org.dcs.api.service.impl.BTestServiceImpl";
 
 	@BeforeClass
 	public static void startZookeeper() throws Exception {
@@ -46,18 +52,41 @@ public class ZookeeperWSDLTest {
 
 			client.start();
 
-			Path path = Paths.get(this.getClass().getResource("TestServiceData.xml").toURI());
-			byte[] bytes = Files.readAllBytes(path);								
+			Path path = Paths.get(this.getClass().getResource("ATestServiceData.xml").toURI());
+			byte[] abytes = Files.readAllBytes(path);								
 
-			client.create().creatingParentsIfNeeded().forPath(TEST_SERVICE_PATH, bytes);			
-			String expected = new String(bytes);
-			String nodeData = new String(client.getData().forPath(TEST_SERVICE_PATH));	
+			// Add A Test Service Impl node
+			client.create().creatingParentsIfNeeded().forPath(A_TEST_SERVICE_PATH, abytes);			
+			String expected = new String(abytes);
+			String nodeData = new String(client.getData().forPath(A_TEST_SERVICE_PATH));	
 			Assert.assertEquals(expected, nodeData);
 
+			// Check A Test Service Impl is retrived
 			tracker = new ZooKeeperServiceTracker();
-			Object obj = tracker.getService(TestService.class);		
-			Assert.assertNotNull(obj);
-			Assert.assertTrue(obj instanceof TestService);
+			CxfServiceEndpoint se = tracker.getServiceEndpoint(TestService.class);		
+			Assert.assertNotNull(se.getServiceProxy());
+			Assert.assertTrue(se.getServiceProxy() instanceof TestService);
+			Assert.assertEquals(A_TEST_SERVICE_IMPL_NAME, se.getServiceProxyImplName());
+
+			path = Paths.get(this.getClass().getResource("BTestServiceData.xml").toURI());
+			byte[] bbytes = Files.readAllBytes(path);	
+
+			// Add B Test Service Impl node
+			client.create().creatingParentsIfNeeded().forPath(B_TEST_SERVICE_PATH, bbytes);			
+			expected = new String(bbytes);
+			nodeData = new String(client.getData().forPath(B_TEST_SERVICE_PATH));	
+			Assert.assertEquals(expected, nodeData);
+
+			Thread.sleep(2000);
+
+			// Check A Test Service Impl is retrived
+			tracker = new ZooKeeperServiceTracker();
+			se = tracker.getServiceEndpoint(TestService.class,B_TEST_SERVICE_IMPL_NAME);		
+			Assert.assertNotNull(se.getServiceProxy());
+			Assert.assertTrue(se.getServiceProxy() instanceof TestService);
+			Assert.assertEquals(B_TEST_SERVICE_IMPL_NAME, se.getServiceProxyImplName());
+
+			// Delete A and B Test Service Impl nodes
 			String zooKeeperServicePath = Utils.getZooKeeperPath(TEST_SERVICE_NAME);
 			List<String> serviceNodes = client.getChildren().forPath(zooKeeperServicePath);	
 
@@ -68,11 +97,15 @@ public class ZookeeperWSDLTest {
 			logger.warn("Waiting for service node delete to be triggered");
 			Thread.sleep(2000);
 			Assert.assertNull(tracker.getService(TestService.class));
-			
-			client.create().creatingParentsIfNeeded().forPath(TEST_SERVICE_PATH, bytes);
+
+
+			client.create().creatingParentsIfNeeded().forPath(A_TEST_SERVICE_PATH, abytes);
 			logger.warn("Waiting for service node add to be triggered");
 			Thread.sleep(2000);
-			Assert.assertNotNull(tracker.getService(TestService.class));
+			se = tracker.getServiceEndpoint(TestService.class,A_TEST_SERVICE_IMPL_NAME);		
+			Assert.assertNotNull(se.getServiceProxy());
+			Assert.assertTrue(se.getServiceProxy() instanceof TestService);
+			Assert.assertEquals(A_TEST_SERVICE_IMPL_NAME, se.getServiceProxyImplName());
 
 		} catch (Exception e) {
 			e.printStackTrace();

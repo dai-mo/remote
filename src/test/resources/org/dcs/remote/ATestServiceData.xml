@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <endpoint-descriptions xmlns="http://www.osgi.org/xmlns/rsa/v1.0.0">
     <endpoint-description>
-        <property name="org.apache.cxf.ws.address" value="TestService.wsdl"/>
+        <property name="org.apache.cxf.ws.address" value="ATestService.wsdl"/>
         <property name="service.intents">
             <array>
                 <value>SOAP.1_1</value>
@@ -9,7 +9,7 @@
                 <value>SOAP</value>
             </array>
         </property>
-        <property name="endpoint.id" value="http://localhost:9000/org/dcs/api/service/TestService"/>
+        <property name="endpoint.id" value="http://localhost:9000/cxf/org/dcs/api/service/impl/ATestServiceImpl"/>
         <property name="objectClass">
             <array>
                 <value>org.dcs.api.service.TestService</value>

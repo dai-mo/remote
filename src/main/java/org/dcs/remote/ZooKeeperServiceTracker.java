@@ -1,6 +1,5 @@
 package org.dcs.remote;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,7 +18,7 @@ public class ZooKeeperServiceTracker {
 	private ZooKeeper zooKeeperClient;
 	private CuratorFramework curatorClient;
 
-	private ConcurrentHashMap<String, List<Object>> serviceObjectMap;
+	private ConcurrentHashMap<String, List<CxfServiceEndpoint>> serviceEndpointMap;
 	private ConcurrentHashMap<String, InterfaceMonitor> serviceMonitorMap;
 
 	private static final String SERVICE_SCOPE = "singleton";
@@ -29,20 +28,34 @@ public class ZooKeeperServiceTracker {
 		curatorClient = CuratorFrameworkFactory.newClient("localhost:2282", retryPolicy);
 		curatorClient.start();
 		zooKeeperClient = curatorClient.getZookeeperClient().getZooKeeper();
-		serviceObjectMap = new ConcurrentHashMap<>();
+		serviceEndpointMap = new ConcurrentHashMap<>();
 		serviceMonitorMap = new ConcurrentHashMap<>();
 
 	}
+	
+	public Object getService(Class<?> serviceClass) throws Exception {
+		return getService(serviceClass, null);
+	}
 
-	public synchronized Object getService(Class<?> serviceClass) throws Exception {
+	public Object getService(Class<?> serviceClass, String serviceImplName) throws Exception {
+		CxfServiceEndpoint serviceEndpoint = getServiceEndpoint(serviceClass, serviceImplName);
+		if(serviceEndpoint != null) {
+			return serviceEndpoint.getServiceProxy();
+		}
+		return null;
+	}
+	
+	public CxfServiceEndpoint getServiceEndpoint(Class<?> serviceClass) throws Exception {
+		return getServiceEndpoint(serviceClass, null);
+	}
+
+	public synchronized CxfServiceEndpoint getServiceEndpoint(Class<?> serviceClass, String serviceImplName) throws Exception {
 		String serviceName = serviceClass.getName();
 
 		// First check if the service is currently available ... 
-		List<Object> serviceObjects = serviceObjectMap.get(serviceName);
+		List<CxfServiceEndpoint> serviceEndpoints = serviceEndpointMap.get(serviceName);
 
-		if(serviceObjects != null && !serviceObjects.isEmpty()) {
-			return serviceObjects.get(0);
-		}
+		getServiceEndpointForImpl(serviceEndpoints, serviceImplName);
 
 		// .. if not, check if there exists a monitor tracking it
 		InterfaceMonitor interfaceMonitor = serviceMonitorMap.get(serviceName);
@@ -50,31 +63,41 @@ public class ZooKeeperServiceTracker {
 			// .. if not, start and register a monitor for the service name 
 			interfaceMonitor = startMonitor(serviceName);			
 		}
-		
+
 		if(interfaceMonitor != null) {
 			// .. retrieve all available service objects for the given service name
 			String zooKeeperServicePath = Utils.getZooKeeperPath(serviceName);
 			List<String> serviceNodes = curatorClient.getChildren().forPath(zooKeeperServicePath);	
-			serviceObjects = new ArrayList<>();
+			serviceEndpoints = new ArrayList<>();
 			for(String serviceNode : serviceNodes) {				
 				byte[] data = curatorClient.getData().forPath(zooKeeperServicePath + "/" + serviceNode);				
 				EndpointDescription firstEnpointDescription = interfaceMonitor.getFirstEnpointDescription(data);
-				Object serviceObject =  WSDLToJava.createProxy(serviceClass, firstEnpointDescription);	
-				serviceObjects.add(serviceObject);				
-				
+				Object serviceProxy =  CxfWSDLUtils.createProxy(serviceClass, firstEnpointDescription);	
+				serviceEndpoints.add(new CxfServiceEndpoint(firstEnpointDescription, serviceProxy));								
 			}
-			if(serviceObjects.isEmpty()) {
-				serviceObjectMap.put(serviceName, new ArrayList<>());				
-			} else {
-				serviceObjectMap.put(serviceName, serviceObjects);
-				return serviceObjects.get(0);
-			}
+			serviceEndpointMap.put(serviceName, serviceEndpoints);
+			return getServiceEndpointForImpl(serviceEndpoints, serviceImplName);
 		}		
 		return null;
 	}
 
+	private CxfServiceEndpoint getServiceEndpointForImpl(List<CxfServiceEndpoint> serviceEndpoints, String serviceImplName) {		
+		if(serviceEndpoints != null && !serviceEndpoints.isEmpty()) {
+			if(serviceImplName != null && !serviceImplName.isEmpty()) {
+				for(CxfServiceEndpoint cse: serviceEndpoints) {
+					if(serviceImplName.equals(cse.getServiceProxyImplName())) {
+						return cse;
+					}
+				}
+			} else {
+				return serviceEndpoints.get(0);
+			}
+		}
+		return null;
+	}
+
 	private InterfaceMonitor startMonitor(String serviceName) {
-		CxfEndpointListener cxfEndpointListener = new CxfEndpointListener(serviceObjectMap);
+		CxfEndpointListener cxfEndpointListener = new CxfEndpointListener(serviceEndpointMap);
 		InterfaceMonitor monitor = new InterfaceMonitor(zooKeeperClient, serviceName, cxfEndpointListener, SERVICE_SCOPE);
 		serviceMonitorMap.put(serviceName, monitor);
 		monitor.start();

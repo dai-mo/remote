@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<endpoint-descriptions xmlns="http://www.osgi.org/xmlns/rsa/v1.0.0">
+    <endpoint-description>
+        <property name="org.apache.cxf.ws.address" value="BTestService.wsdl"/>
+        <property name="service.intents">
+            <array>
+                <value>SOAP.1_1</value>
+                <value>HTTP</value>
+                <value>SOAP</value>
+            </array>
+        </property>
+        <property name="endpoint.id" value="http://localhost:9000/cxf/org/dcs/api/service/impl/BTestServiceImpl"/>
+        <property name="objectClass">
+            <array>
+                <value>org.dcs.api.service.TestService</value>
+            </array>
+        </property>
+        <property name="endpoint.framework.uuid" value="12f230d2-30d2-4687-bf58-7b7370b493de"/>
+        <property name="endpoint.package.version.org.dcs.api.service" value="0.0.0"/>
+        <property name="service.imported" value="true"/>
+        <property name="service.scope" value="singleton"/>
+        <property name="service.imported.configs">
+            <array>
+                <value>org.apache.cxf.ws</value>
+            </array>
+        </property>
+        <property name="endpoint.service.id" value-type="Long" value="163"/>
+        <property name="service.bundleid" value-type="Long" value="798"/>
+    </endpoint-description>
+</endpoint-descriptions>

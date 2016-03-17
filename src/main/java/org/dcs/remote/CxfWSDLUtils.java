@@ -2,51 +2,25 @@ package org.dcs.remote;
 
 import java.lang.reflect.Proxy;
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.util.Map;
 
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 
 import org.apache.cxf.common.util.PackageUtils;
+import org.apache.cxf.dosgi.dsw.Constants;
 import org.apache.cxf.dosgi.dsw.handlers.ServiceInvocationHandler;
 import org.osgi.service.remoteserviceadmin.EndpointDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WSDLToJava {
+public class CxfWSDLUtils {
 
-	private static final Logger logger = LoggerFactory.getLogger(WSDLToJava.class);
+	private static final Logger logger = LoggerFactory.getLogger(CxfWSDLUtils.class);
 
-	//	public static Object toServiceObject(String serviceWSDLLocation) throws MalformedURLException, ServiceException {
-	//		URL wsdlUrl;
-	//		if(serviceWSDLLocation != null) {
-	//			if(serviceWSDLLocation.startsWith("http")) {
-	//				wsdlUrl = new URL(serviceWSDLLocation + "?wsdl");
-	//			} else {
-	//				wsdlUrl = WSDLToJava.class.getResource(serviceWSDLLocation);        
-	//			}
-	//		} else {
-	//			return null;
-	//		}
-	//
-	//		String nameSpaceUri = "http://service.api.dcs.org/";
-	//		String serviceName = "TestService";
-	//		String portName = "TestServicePort";
-	//
-	//		ServiceFactory serviceFactory = ServiceFactory.newInstance();
-	//
-	//		Service testService = serviceFactory.createService(wsdlUrl,  new QName(nameSpaceUri, serviceName));
-	//
-	//
-	//		return testService.getPort(new QName(nameSpaceUri, portName), TestService.class); 
-	//
-	//	}
 
-	public static Object createProxy(Class<?> iClass,
-			EndpointDescription endpoint) {
+	public static Object createProxy(Class<?> iClass, EndpointDescription endpoint) {
 		URL wsdlAddress;
 		try {
 			wsdlAddress = getWsdlAddress(endpoint, iClass);
@@ -56,21 +30,21 @@ public class WSDLToJava {
 		}
 
 		logger.info("Creating a " + endpoint.getInterfaces().toArray()[0] + " client, wsdl address is "
-				+ getProperty(endpoint, OsgiConstants.WSDL_CONFIG_PREFIX));
+				+ getProperty(endpoint, Constants.WSDL_CONFIG_PREFIX));
 
-		String serviceNs = getProperty(endpoint, OsgiConstants.WSDL_SERVICE_NAMESPACE);
+		String serviceNs = getProperty(endpoint, Constants.WSDL_SERVICE_NAMESPACE);
 		if (serviceNs == null) {
 			serviceNs = PackageUtils.getNamespace(PackageUtils.getPackageName(iClass));
 		}
-		String serviceName = getProperty(endpoint, OsgiConstants.WSDL_SERVICE_NAME);
+		String serviceName = getProperty(endpoint, Constants.WSDL_SERVICE_NAME);
 		if (serviceName == null) {
 			serviceName = iClass.getSimpleName();
 		}
 		QName serviceQname = getServiceQName(iClass, endpoint.getProperties(),
-				OsgiConstants.WSDL_SERVICE_NAMESPACE,
-				OsgiConstants.WSDL_SERVICE_NAME);
+				Constants.WSDL_SERVICE_NAMESPACE,
+				Constants.WSDL_SERVICE_NAME);
 		QName portQname = getPortQName(serviceQname.getNamespaceURI(),
-				endpoint.getProperties(), OsgiConstants.WSDL_PORT_NAME);
+				endpoint.getProperties(), Constants.WSDL_PORT_NAME);
 		Service service = Service.create(wsdlAddress, serviceQname);
 		Object proxy = getProxy(portQname == null ? service.getPort(iClass) : service.getPort(portQname, iClass),
 				iClass);		
@@ -85,12 +59,7 @@ public class WSDLToJava {
 				address += "?wsdl";
 				serviceUrl = new URL(address);
 			} else if (address.endsWith(".wsdl")){
-				serviceUrl = WSDLToJava.class.getResource(address);     
-//				try {
-//					address = Paths.get(resource.toURI()).toFile().getAbsolutePath();
-//				} catch (URISyntaxException e) {
-//					logger.warn("Error in wsdl url");
-//				}
+				serviceUrl = CxfWSDLUtils.class.getResource(address);     
 			}
 		}
 
