@@ -14,6 +14,7 @@ import org.apache.curator.test.TestingServer;
 import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils;
 import org.dcs.api.service.TestService;
 import org.dcs.api.service.TestServiceImpl;
+import org.dcs.remote.cxf.CxfServiceEndpoint;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,6 +38,7 @@ public class ZookeeperWSDLTest {
 	private static final String A_TEST_SERVICE_IMPL_NAME = "org.dcs.api.service.impl.ATestServiceImpl";
 	private static final String B_TEST_SERVICE_IMPL_NAME = "org.dcs.api.service.impl.BTestServiceImpl";
 
+	private static final String ZOOKEEPER_SERVER = "localhost:2282";
 	@BeforeClass
 	public static void startZookeeper() throws Exception {
 		zkTestServer = new TestingServer(2282);
@@ -48,7 +50,7 @@ public class ZookeeperWSDLTest {
 
 		ZooKeeperServiceTracker tracker = null;
 		RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-		try(CuratorFramework client = CuratorFrameworkFactory.newClient("localhost:2282", retryPolicy)) {
+		try(CuratorFramework client = CuratorFrameworkFactory.newClient(ZOOKEEPER_SERVER, retryPolicy)) {
 
 			client.start();
 
@@ -80,7 +82,6 @@ public class ZookeeperWSDLTest {
 			Thread.sleep(2000);
 
 			// Check A Test Service Impl is retrived
-			tracker = new ZooKeeperServiceTracker();
 			se = tracker.getServiceEndpoint(TestService.class,B_TEST_SERVICE_IMPL_NAME);		
 			Assert.assertNotNull(se.getServiceProxy());
 			Assert.assertTrue(se.getServiceProxy() instanceof TestService);

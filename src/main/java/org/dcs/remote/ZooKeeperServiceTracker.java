@@ -11,6 +11,10 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.cxf.dosgi.discovery.zookeeper.subscribe.InterfaceMonitor;
 import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils;
 import org.apache.zookeeper.ZooKeeper;
+import org.dcs.remote.config.ConfigurationFacade;
+import org.dcs.remote.cxf.CxfEndpointListener;
+import org.dcs.remote.cxf.CxfServiceEndpoint;
+import org.dcs.remote.cxf.CxfWSDLUtils;
 import org.osgi.service.remoteserviceadmin.EndpointDescription;
 
 public class ZooKeeperServiceTracker {
@@ -25,7 +29,9 @@ public class ZooKeeperServiceTracker {
 
 	public ZooKeeperServiceTracker() throws Exception {
 		RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-		curatorClient = CuratorFrameworkFactory.newClient("localhost:2282", retryPolicy);
+		
+		String serverList = ConfigurationFacade.getCurrentConfiguration().getZookeeperServers();
+		curatorClient = CuratorFrameworkFactory.newClient(serverList, retryPolicy);
 		curatorClient.start();
 		zooKeeperClient = curatorClient.getZookeeperClient().getZooKeeper();
 		serviceEndpointMap = new ConcurrentHashMap<>();

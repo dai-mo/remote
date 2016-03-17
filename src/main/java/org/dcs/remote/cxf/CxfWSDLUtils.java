@@ -1,4 +1,4 @@
-package org.dcs.remote;
+package org.dcs.remote.cxf;
 
 import java.lang.reflect.Proxy;
 import java.net.MalformedURLException;

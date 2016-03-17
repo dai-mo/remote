@@ -1,4 +1,4 @@
-package org.dcs.remote;
+package org.dcs.remote.cxf;
 
 import org.osgi.service.remoteserviceadmin.EndpointDescription;
 
