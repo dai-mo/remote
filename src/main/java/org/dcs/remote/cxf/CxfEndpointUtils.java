@@ -26,7 +26,8 @@ public class CxfEndpointUtils {
 			int startIndex = address.indexOf(CXF_BASE_PATH) + CXF_BASE_PATH.length();
 			return address.substring(startIndex).replaceAll("/", ".");
 		}
-		throw new IllegalStateException("Target endpoint is not a cxf endpoint");
+		//throw new IllegalStateException("Target endpoint is not a cxf endpoint");
+		return null;
 	}	
 
 }
