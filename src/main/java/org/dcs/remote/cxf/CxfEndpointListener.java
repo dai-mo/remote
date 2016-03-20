@@ -41,13 +41,13 @@ public class CxfEndpointListener implements EndpointListener {
 	@Override
 	public void endpointRemoved(EndpointDescription endpoint, String matchedFilter) {
 		String[] serviceNames = CxfEndpointUtils.getServiceInterfaceNames(endpoint);
+		CxfServiceEndpoint serviceEndpointToDelete = null;
 		for(String serviceName: serviceNames) {
 			List<CxfServiceEndpoint> serviceEndpoints = serviceEndpointMap.get(serviceName);
-			if(serviceEndpoints != null) {
-				CxfServiceEndpoint serviceEndpointToDelete = null;
+			if(serviceEndpoints != null) {				
 				for(CxfServiceEndpoint serviceEndpoint: serviceEndpoints) {
 					String serviceProxyImplName = CxfEndpointUtils.generateServiceProxyImplName(endpoint);
-					if(serviceProxyImplName.equals(serviceEndpoint.getServiceProxyImplName())) {
+					if(serviceProxyImplName != null && serviceProxyImplName.equals(serviceEndpoint.getServiceProxyImplName())) {
 						serviceEndpointToDelete = serviceEndpoint;
 						break;
 					}
@@ -55,6 +55,8 @@ public class CxfEndpointListener implements EndpointListener {
 				if(serviceEndpointToDelete != null) {
 					serviceEndpoints.remove(serviceEndpointToDelete);
 					logger.warn("Removing service proxy / impl : " + serviceName + "/ " + serviceEndpointToDelete.getServiceProxyImplName());
+				} else {
+					serviceEndpointMap.put(serviceName, new ArrayList<>());
 				}
 			}
 		}		

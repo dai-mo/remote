@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <endpoint-descriptions xmlns="http://www.osgi.org/xmlns/rsa/v1.0.0">
     <endpoint-description>
-        <property name="org.apache.cxf.ws.address" value="BTestService.wsdl"/>
+        <property name="org.apache.cxf.ws.address" value="SingleImplTestService.wsdl"/>
         <property name="service.intents">
             <array>
                 <value>SOAP.1_1</value>
@@ -9,10 +9,10 @@
                 <value>SOAP</value>
             </array>
         </property>
-        <property name="endpoint.id" value="http://localhost:9000/cxf/org/dcs/api/service/impl/BTestServiceImpl"/>
+        <property name="endpoint.id" value="http://localhost:9000/org/dcs/api/service/impl/SingleImplTestService"/>
         <property name="objectClass">
             <array>
-                <value>org.dcs.api.service.TestService</value>
+                <value>org.dcs.api.service.SingleImplTestService</value>
             </array>
         </property>
         <property name="endpoint.framework.uuid" value="12f230d2-30d2-4687-bf58-7b7370b493de"/>

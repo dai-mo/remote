@@ -4,7 +4,7 @@ import javax.jws.WebMethod;
 import javax.jws.WebService;
 
 @WebService
-public interface TestService {
+public interface SingleImplTestService {
 	
 	@WebMethod
 	public void testMethod();

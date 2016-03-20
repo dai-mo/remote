@@ -61,7 +61,11 @@ public class ZooKeeperServiceTracker {
 		// First check if the service is currently available ... 
 		List<CxfServiceEndpoint> serviceEndpoints = serviceEndpointMap.get(serviceName);
 
-		getServiceEndpointForImpl(serviceEndpoints, serviceImplName);
+		CxfServiceEndpoint serviceEndpoint = getServiceEndpoint(serviceEndpoints, serviceImplName);
+		
+		if(serviceEndpoint != null) {
+			return serviceEndpoint;
+		}
 
 		// .. if not, check if there exists a monitor tracking it
 		InterfaceMonitor interfaceMonitor = serviceMonitorMap.get(serviceName);
@@ -82,12 +86,12 @@ public class ZooKeeperServiceTracker {
 				serviceEndpoints.add(new CxfServiceEndpoint(firstEnpointDescription, serviceProxy));								
 			}
 			serviceEndpointMap.put(serviceName, serviceEndpoints);
-			return getServiceEndpointForImpl(serviceEndpoints, serviceImplName);
+			return getServiceEndpoint(serviceEndpoints, serviceImplName);
 		}		
 		return null;
 	}
 
-	private CxfServiceEndpoint getServiceEndpointForImpl(List<CxfServiceEndpoint> serviceEndpoints, String serviceImplName) {		
+	private CxfServiceEndpoint getServiceEndpoint(List<CxfServiceEndpoint> serviceEndpoints, String serviceImplName) {		
 		if(serviceEndpoints != null && !serviceEndpoints.isEmpty()) {
 			if(serviceImplName != null && !serviceImplName.isEmpty()) {
 				for(CxfServiceEndpoint cse: serviceEndpoints) {

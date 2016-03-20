@@ -4,7 +4,7 @@ import javax.jws.WebMethod;
 import javax.jws.WebService;
 
 @WebService
-public class TestServiceImpl implements TestService {
+public class TestServiceImpl implements MultiImplTestService {
 
 	@WebMethod
 	@Override
