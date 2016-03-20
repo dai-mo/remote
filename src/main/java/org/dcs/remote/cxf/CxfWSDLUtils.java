@@ -3,22 +3,19 @@ package org.dcs.remote.cxf;
 import java.lang.reflect.Proxy;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Map;
 
-import javax.xml.namespace.QName;
+import javax.wsdl.WSDLException;
 
+import org.apache.cxf.Bus;
+import org.apache.cxf.BusFactory;
 import org.apache.cxf.aegis.databinding.AegisDatabinding;
-import org.apache.cxf.common.util.PackageUtils;
-import org.apache.cxf.databinding.stax.StaxDataBinding;
 import org.apache.cxf.dosgi.dsw.handlers.ServiceInvocationHandler;
 import org.apache.cxf.endpoint.Client;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.frontend.ClientProxyFactoryBean;
 import org.apache.cxf.interceptor.LoggingInInterceptor;
 import org.apache.cxf.interceptor.LoggingOutInterceptor;
-import org.apache.cxf.jaxb.JAXBDataBinding;
-import org.apache.cxf.transport.http.HTTPConduit;
-import org.apache.cxf.transports.http.configuration.HTTPClientPolicy;
+import org.apache.cxf.wsdl.WSDLManager;
 import org.osgi.service.remoteserviceadmin.EndpointDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +25,11 @@ public class CxfWSDLUtils {
 	private static final Logger logger = LoggerFactory.getLogger(CxfWSDLUtils.class);
 
 
-	public static Object createProxy(Class<?> iClass, EndpointDescription endpoint) {		
+	public static Object createProxy(Class<?> iClass, EndpointDescription endpoint){		
+
+		
 		ClientProxyFactoryBean factory = new ClientProxyFactoryBean();
+		
 		factory.setServiceClass(iClass);
 		factory.getServiceFactory().setDataBinding(new AegisDatabinding());
 		factory.setAddress(CxfEndpointUtils.getAddress(endpoint));
@@ -37,10 +37,19 @@ public class CxfWSDLUtils {
 		URL wsdlAddress;
 		try {
 			wsdlAddress = getWsdlAddress(endpoint, iClass);
-		} catch (MalformedURLException ex) {
+			// The CXF Bus used to cache the schema definition corresponding to wsdl locations.
+			// if the proxy is recreated after a reload of the service on karaf side, the exception
+			// `org.apache.ws.commons.schema.XmlSchemaException: Schema name conflict in collection`
+			// is thrown.
+			// To workaround this it is required to remove the schema definition.
+			Bus defaultBus = BusFactory.getDefaultBus();
+			defaultBus.getExtension(WSDLManager.class)
+				.removeDefinition(defaultBus.getExtension(WSDLManager.class).getDefinition(wsdlAddress.toString()));
+		} catch (MalformedURLException | WSDLException ex) {
 			logger.warn("WSDL address is malformed");
 			return null;
 		}
+		
 		factory.setWsdlLocation(wsdlAddress.toString());
 		Object clientProxy = factory.create();
 				
