@@ -1,27 +1,49 @@
 package org.dcs.remote;
 
-import javax.servlet.ServletContext;
+import java.nio.channels.IllegalSelectorException;
 
 import org.dcs.remote.osgi.FrameworkService;
 
 /**
  * Created by laurent on 16/02/16.
- * THIS CLASS IS JUST A STUB FOR COMPILATION. It actually does nothing.
+ * 
  */
 public class RemoteService {
 
+	
+	private static ZooKeeperServiceTracker zst;
 
-	private static FrameworkService frameworkService;
-
-	public static Object getService(String className) {
-		return frameworkService.getService(className);
+	public static Object getService(Class<?> serviceClass)  {
+		try {
+			return getZooKeeperServiceTracker().getService(serviceClass);
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
+		}
+	}
+	
+	public static void initialize()  {
+		getZooKeeperServiceTracker();
+	}
+	
+	public static void close() {
+		if(zst != null) {
+			try {
+				zst.close();
+			} catch (InterruptedException e) {
+				throw new IllegalStateException(e);
+			}
+		}
 	}
 
-	public static void initialize(ServletContext servletContext) {
-		frameworkService = new FrameworkService(servletContext);
+	private static ZooKeeperServiceTracker getZooKeeperServiceTracker()  {
+		if(zst == null) {
+			try {
+				zst = new ZooKeeperServiceTracker();
+			} catch (Exception e) {
+				throw new IllegalStateException(e);
+			}
+		}
+		return zst;
 	}
 
-	public static FrameworkService getFrameworkService() {
-		return frameworkService;
-	}
 }

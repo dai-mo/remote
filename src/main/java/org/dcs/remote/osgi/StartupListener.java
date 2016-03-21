@@ -40,12 +40,12 @@ public final class StartupListener
         LogManager.getLogManager().reset();
         java.util.logging.Logger.getLogger("global").setLevel(Level.FINEST);
 
-        RemoteService.initialize(event.getServletContext());
-        RemoteService.getFrameworkService().start();
+        RemoteService.initialize();
+        
     }
 
     public void contextDestroyed(ServletContextEvent event)
     {
-    	RemoteService.getFrameworkService().stop();
+    	RemoteService.close();
     }
 }
