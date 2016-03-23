@@ -1,30 +1,34 @@
 package org.dcs.remote;
 
-import java.nio.channels.IllegalSelectorException;
-
-import org.dcs.remote.osgi.FrameworkService;
-
 /**
  * Created by laurent on 16/02/16.
  * 
  */
 public class RemoteService {
 
-	
+
 	private static ZooKeeperServiceTracker zst;
 
 	public static Object getService(Class<?> serviceClass)  {
+		if(zst == null) {
+			throw new IllegalStateException("Zookeeper service tracker has not been initialised");
+		}
+		
 		try {
-			return getZooKeeperServiceTracker().getService(serviceClass);
+			return zst.getService(serviceClass);
 		} catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
 	}
-	
+
 	public static void initialize()  {
-		getZooKeeperServiceTracker();
+		initZooKeeperServiceTracker();
 	}
-	
+
+	public static void initialize(String serverList)  {
+		initZooKeeperServiceTracker(serverList);
+	}
+
 	public static void close() {
 		if(zst != null) {
 			try {
@@ -35,15 +39,19 @@ public class RemoteService {
 		}
 	}
 
-	private static ZooKeeperServiceTracker getZooKeeperServiceTracker()  {
-		if(zst == null) {
-			try {
-				zst = new ZooKeeperServiceTracker();
-			} catch (Exception e) {
-				throw new IllegalStateException(e);
-			}
+	private static void initZooKeeperServiceTracker()  {
+		try {
+			zst = new ZooKeeperServiceTracker();
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
 		}
-		return zst;
 	}
 
+	private static void initZooKeeperServiceTracker(String serverList)  {
+		try {
+			zst = new ZooKeeperServiceTracker(serverList);
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
+		}
+	}
 }
