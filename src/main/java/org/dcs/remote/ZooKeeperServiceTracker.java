@@ -28,15 +28,23 @@ public class ZooKeeperServiceTracker {
 	private static final String SERVICE_SCOPE = "singleton";
 
 	public ZooKeeperServiceTracker() throws Exception {
+		String serverList = ConfigurationFacade.getCurrentConfiguration().getZookeeperServers();
+		init(serverList);
+	}
+	
+	public ZooKeeperServiceTracker(String serverList) throws Exception {
+		init(serverList);
+	}
+	
+	private void init(String serverList) throws Exception {
 		RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
 		
-		String serverList = ConfigurationFacade.getCurrentConfiguration().getZookeeperServers();
+		
 		curatorClient = CuratorFrameworkFactory.newClient(serverList, retryPolicy);
 		curatorClient.start();
 		zooKeeperClient = curatorClient.getZookeeperClient().getZooKeeper();
 		serviceEndpointMap = new ConcurrentHashMap<>();
 		serviceMonitorMap = new ConcurrentHashMap<>();
-
 	}
 	
 	public Object getService(Class<?> serviceClass) throws Exception {
