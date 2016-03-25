@@ -40,6 +40,9 @@ public class RemoteService {
 	}
 
 	private static void initZooKeeperServiceTracker()  {
+		if(zst != null) {
+			return;
+		}
 		try {
 			zst = new ZooKeeperServiceTracker();
 		} catch (Exception e) {
@@ -48,6 +51,9 @@ public class RemoteService {
 	}
 
 	private static void initZooKeeperServiceTracker(String serverList)  {
+		if(zst != null) {
+			return;
+		}
 		try {
 			zst = new ZooKeeperServiceTracker(serverList);
 		} catch (Exception e) {
