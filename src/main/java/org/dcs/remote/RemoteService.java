@@ -40,6 +40,9 @@ public class RemoteService {
 	}
 
 	private static void initZooKeeperServiceTracker()  {
+		if(zst != null) {
+			return;
+		}
 		try {
 			zst = new ZooKeeperServiceTracker();
 		} catch (Exception e) {
@@ -48,6 +51,13 @@ public class RemoteService {
 	}
 
 	private static void initZooKeeperServiceTracker(String serverList)  {
+		// FIXME: normally this method should not exist as the 
+		//        server list should always be taken from config.
+		//        Once the distributed config problem is resoved, then
+		//        this should be removed
+		if(zst != null) {
+			return;
+		}
 		try {
 			zst = new ZooKeeperServiceTracker(serverList);
 		} catch (Exception e) {
