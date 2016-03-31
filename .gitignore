@@ -173,3 +173,8 @@ tramp
 .cask/
 
 # Created by .ignore support plugin (hsz.mobi)
+
+# Misc.
+.cache-main
+.cache-tests
+
