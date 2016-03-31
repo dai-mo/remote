@@ -2,7 +2,6 @@ import Dependencies._
 import Global._
 import Common._
 
-
 lazy val root = (project in file(".")).
   configs(IntegrationTest).
   settings(commonSettings: _*).
