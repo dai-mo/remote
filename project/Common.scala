@@ -17,7 +17,7 @@ object Common {
     checksums in update := Nil,
     javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
     javacOptions in doc := Seq("-source", "1.8"),
-    publishTo := Some("Artifactory Realm" at nanonetMavenRepository + "/artifactory/libs-snapshot-local/"),
+    publishTo := Some("Artifactory Realm" at nanonetArtifactoryBaseUrl + "/artifactory/libs-snapshot-local/"),
     credentials += Credentials(Path.userHome / ".jfcredentials"),
     resolvers ++= Seq(
       DefaultMavenRepository,
