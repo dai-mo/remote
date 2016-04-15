@@ -9,17 +9,18 @@ import Dependencies._
 import Global._
 
 object Common {
-	lazy val commonSettings = Seq(
-			organization := "org.dcs",
-			version := dcsVersion,
-			scalaVersion := scVersion,
-			crossPaths := false,
-			checksums in update := Nil,
-			javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
-			javacOptions in doc := Seq("-source", "1.8"),
-			resolvers ++= Seq(
-			    DefaultMavenRepository,
-					localMavenRepository
-					)
-			)
+  lazy val commonSettings = Seq(
+    organization := "org.dcs",
+    version := dcsVersion,
+    scalaVersion := scVersion,
+    crossPaths := false,
+    checksums in update := Nil,
+    javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked"),
+    javacOptions in doc := Seq("-source", "1.8"),
+    publishTo := Some("Artifactory Realm" at nanonetArtifactoryBaseUrl + "/artifactory/libs-snapshot-local/"),
+    credentials += Credentials(Path.userHome / ".jfcredentials"),
+    resolvers ++= Seq(
+      DefaultMavenRepository,
+      localMavenRepository,
+      nanonetMavenRepository))
 }
