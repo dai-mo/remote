@@ -15,6 +15,7 @@ import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils;
 import org.dcs.api.service.MultiImplTestService;
 import org.dcs.api.service.SingleImplTestService;
 import org.dcs.remote.ZooKeeperServiceTracker;
+import org.dcs.remote.cxf.CxfServiceEndpoint;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

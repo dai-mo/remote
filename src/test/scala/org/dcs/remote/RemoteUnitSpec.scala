@@ -7,7 +7,7 @@ import org.mockito.runners.MockitoJUnitRunner
 import org.scalatest.junit.JUnitSuite
 import org.scalatest.FlatSpec
 
-abstract class BaseUnitSpec extends FlatSpec
+abstract class RemoteBaseUnitSpec extends FlatSpec
   with Matchers
   with OptionValues
   with Inside
