@@ -17,9 +17,9 @@ import org.apache.cxf.interceptor.LoggingOutInterceptor
 import java.lang.reflect.Proxy
 import org.apache.cxf.dosgi.dsw.handlers.ServiceInvocationHandler
 
-object ScalaCxfWSDLUtils {
+object CxfWSDLUtils {
 
-  private val logger = LoggerFactory.getLogger(classOf[ScalaCxfWSDLUtils])
+  private val logger = LoggerFactory.getLogger(classOf[CxfWSDLUtils])
 
   def proxy(iClass: Class[_], endpointDescription: EndpointDescription): Option[Any] = {
 
@@ -48,7 +48,7 @@ object ScalaCxfWSDLUtils {
 
       factory.setServiceClass(iClass)
       factory.getServiceFactory().setDataBinding(new AegisDatabinding())
-      factory.setAddress(CxfEndpointUtils.getAddress(endpointDescription))
+      factory.setAddress(CxfEndpointUtils.address(endpointDescription))
       factory.setWsdlLocation(wsdlAddress.get.toString());
 
       val clientProxy: Any = factory.create();
@@ -65,7 +65,7 @@ object ScalaCxfWSDLUtils {
   }
 
   def getWsdlAddress(endpointDescription: EndpointDescription, iClass: Class[_]): URL = {
-    val address = CxfEndpointUtils.getAddress(endpointDescription);
+    val address = CxfEndpointUtils.address(endpointDescription);
     address match {
       case address if (address.startsWith("http")) => new URL(address + "?wsdl")
       case address if (address.endsWith(".wsdl"))  => classOf[CxfWSDLUtils].getResource(address)
@@ -76,4 +76,4 @@ object ScalaCxfWSDLUtils {
 
 }
 
-class ScalaCxfWSDLUtils 
+class CxfWSDLUtils 

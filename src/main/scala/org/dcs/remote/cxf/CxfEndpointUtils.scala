@@ -2,7 +2,7 @@ package org.dcs.remote.cxf
 
 import org.osgi.service.remoteserviceadmin.EndpointDescription
 
-object ScalaCxfEndpointUtils {
+object CxfEndpointUtils {
   private val CxfBasePath: String = "cxf/"
 	private val AddressKey: String = "org.apache.cxf.ws.address"
 	

@@ -16,7 +16,7 @@ import org.dcs.api.service.SingleImplTestService
 import org.dcs.remote.RemoteBaseUnitSpec
 import org.dcs.remote.cxf.ZookeeperWSDLSpec._
 import org.slf4j.LoggerFactory
-import org.dcs.remote.ScalaZookeeperServiceTracker
+import org.dcs.remote.ZookeeperServiceTracker
 
 object ZookeeperWSDLSpec {
 
@@ -61,11 +61,11 @@ class ZookeeperWSDLSpec extends RemoteBaseUnitSpec {
   }
 
   override def beforeEach() = {
-    ScalaZookeeperServiceTracker.start
+    ZookeeperServiceTracker.start
   }
 
   override def afterEach() = {
-    ScalaZookeeperServiceTracker.close
+    ZookeeperServiceTracker.close
   }
 
   "The Zookeeper Service Tracker" should "work in the case of services with a single implementation" in {
@@ -80,12 +80,12 @@ class ZookeeperWSDLSpec extends RemoteBaseUnitSpec {
 
     // Check Single Impl Test Service Impl is retrieved
 
-    var service = ScalaZookeeperServiceTracker.service(classOf[SingleImplTestService])
+    var service = ZookeeperServiceTracker.service(classOf[SingleImplTestService])
 
     service should not be (None)
     assert(service.get.isInstanceOf[SingleImplTestService])    
     
-    var endpoint = ScalaZookeeperServiceTracker.serviceEndpoint(classOf[SingleImplTestService]); 
+    var endpoint = ZookeeperServiceTracker.serviceEndpoint(classOf[SingleImplTestService]); 
     endpoint.get.serviceProxyImplName should be (None)
 
     // Delete A and B Test Service Impl nodes
@@ -99,17 +99,17 @@ class ZookeeperWSDLSpec extends RemoteBaseUnitSpec {
     logger.warn("Waiting for service node delete to be triggered")
     Thread.sleep(2000)
 
-    ScalaZookeeperServiceTracker.service(classOf[SingleImplTestService]) should be (None)
+    ZookeeperServiceTracker.service(classOf[SingleImplTestService]) should be (None)
 
     client.create().creatingParentsIfNeeded().forPath(SingleImplTestServicePath, abytes);
     logger.warn("Waiting for service node add to be triggered");
     Thread.sleep(2000);
 
-    service = ScalaZookeeperServiceTracker.service(classOf[SingleImplTestService])
+    service = ZookeeperServiceTracker.service(classOf[SingleImplTestService])
     service should not be (None)
     assert(service.get.isInstanceOf[SingleImplTestService])   
     
-    endpoint = ScalaZookeeperServiceTracker.serviceEndpoint(classOf[SingleImplTestService]); 
+    endpoint = ZookeeperServiceTracker.serviceEndpoint(classOf[SingleImplTestService]); 
     endpoint.get.serviceProxyImplName should be (None)
   }
 
@@ -125,12 +125,12 @@ class ZookeeperWSDLSpec extends RemoteBaseUnitSpec {
 
     // Check A Test Service Impl is retrived
 
-    var service = ScalaZookeeperServiceTracker.service(classOf[MultiImplTestService])
+    var service = ZookeeperServiceTracker.service(classOf[MultiImplTestService])
 
     service should not be (None)
     assert(service.get.isInstanceOf[MultiImplTestService])
     
-    var endpoint = ScalaZookeeperServiceTracker.serviceEndpoint(classOf[MultiImplTestService])
+    var endpoint = ZookeeperServiceTracker.serviceEndpoint(classOf[MultiImplTestService])
     endpoint.get.serviceProxyImplName.get should be (ATestServiceImplName)
 
     path = Paths.get(this.getClass().getResource("BTestServiceData.xml").toURI())
@@ -143,12 +143,12 @@ class ZookeeperWSDLSpec extends RemoteBaseUnitSpec {
     assert(expected == nodeData)
 
     // Check A Test Service Impl is retrived
-    service = ScalaZookeeperServiceTracker.service(classOf[MultiImplTestService], BTestServiceImplName)
+    service = ZookeeperServiceTracker.service(classOf[MultiImplTestService], BTestServiceImplName)
 
     service should not be (None)
     assert(service.get.isInstanceOf[MultiImplTestService])
     
-    endpoint = ScalaZookeeperServiceTracker.serviceEndpoint(classOf[MultiImplTestService], BTestServiceImplName)
+    endpoint = ZookeeperServiceTracker.serviceEndpoint(classOf[MultiImplTestService], BTestServiceImplName)
     endpoint.get.serviceProxyImplName.get should be (BTestServiceImplName)
 
     // Delete A and B Test Service Impl nodes
@@ -162,19 +162,19 @@ class ZookeeperWSDLSpec extends RemoteBaseUnitSpec {
     logger.warn("Waiting for service node delete to be triggered")
     Thread.sleep(2000)
 
-    ScalaZookeeperServiceTracker.service(classOf[MultiImplTestService]) should be (None)
+    ZookeeperServiceTracker.service(classOf[MultiImplTestService]) should be (None)
 
     client.create().creatingParentsIfNeeded().forPath(ATestServicePath, abytes)
 
     logger.warn("Waiting for service node add to be triggered")
     Thread.sleep(2000)
 
-    service = ScalaZookeeperServiceTracker.service(classOf[MultiImplTestService], ATestServiceImplName)
+    service = ZookeeperServiceTracker.service(classOf[MultiImplTestService], ATestServiceImplName)
 
     service should not be (None)
     assert(service.get.isInstanceOf[MultiImplTestService])
     
-    endpoint = ScalaZookeeperServiceTracker.serviceEndpoint(classOf[MultiImplTestService], ATestServiceImplName)
+    endpoint = ZookeeperServiceTracker.serviceEndpoint(classOf[MultiImplTestService], ATestServiceImplName)
     endpoint.get.serviceProxyImplName.get should be (ATestServiceImplName)
   }
 }

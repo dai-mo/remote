@@ -11,18 +11,18 @@ import org.apache.curator.retry.ExponentialBackoffRetry
 import org.apache.cxf.dosgi.discovery.zookeeper.subscribe.InterfaceMonitor
 import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils
 import org.dcs.commons.config.ConfigurationFacade
-import org.dcs.remote.cxf.ScalaCxfEndpointListener
-import org.dcs.remote.cxf.ScalaCxfEndpointUtils
-import org.dcs.remote.cxf.ScalaCxfServiceEndpoint
-import org.dcs.remote.cxf.ScalaCxfWSDLUtils
+import org.dcs.remote.cxf.CxfEndpointListener
+import org.dcs.remote.cxf.CxfEndpointUtils
+import org.dcs.remote.cxf.CxfServiceEndpoint
+import org.dcs.remote.cxf.CxfWSDLUtils
 import org.osgi.service.remoteserviceadmin.EndpointDescription
 import org.slf4j.LoggerFactory
 import org.apache.curator.framework.CuratorFramework
 import org.apache.zookeeper.ZooKeeper
 
-object ScalaZookeeperServiceTracker {
+object ZookeeperServiceTracker {
 
-  val logger = LoggerFactory.getLogger(classOf[ScalaZookeeperServiceTracker])
+  val logger = LoggerFactory.getLogger(classOf[ZookeeperServiceTracker])
 
   val ServiceScope = "singleton"
 
@@ -33,7 +33,7 @@ object ScalaZookeeperServiceTracker {
   var curatorClient: CuratorFramework = _
   var zooKeeperClient: ZooKeeper = _
 
-  var serviceEndpointMap = new ConcurrentHashMap[String, List[ScalaCxfServiceEndpoint]]()
+  var serviceEndpointMap = new ConcurrentHashMap[String, List[CxfServiceEndpoint]]()
   val serviceMonitorMap = new ConcurrentHashMap[String, InterfaceMonitor]()
 
   start
@@ -54,22 +54,22 @@ object ScalaZookeeperServiceTracker {
   }
 
   def addEndpoint(serviceName: String, endpointDescription: EndpointDescription) {
-    var endpoints: List[ScalaCxfServiceEndpoint] = serviceEndpointMap.getOrElse(serviceName, Nil)
+    var endpoints: List[CxfServiceEndpoint] = serviceEndpointMap.getOrElse(serviceName, Nil)
     if (endpoints == Nil) serviceEndpointMap.put(serviceName, endpoints)
 
-    val serviceProxy = ScalaCxfWSDLUtils.proxy(Class.forName(serviceName), endpointDescription)
-    val endpoint = new ScalaCxfServiceEndpoint(endpointDescription, serviceProxy)
+    val serviceProxy = CxfWSDLUtils.proxy(Class.forName(serviceName), endpointDescription)
+    val endpoint = new CxfServiceEndpoint(endpointDescription, serviceProxy)
     endpoints = endpoint :: endpoints
 
     logger.warn("Added service proxy / impl : " + serviceName + "/ " + endpoint.serviceProxyImplName)
   }
 
   def removeEndpoint(serviceName: String, endpointDescription: EndpointDescription) {
-    var endpoints: List[ScalaCxfServiceEndpoint] = serviceEndpointMap.getOrElse(serviceName, Nil)
-    var endpointToDelete: Option[ScalaCxfServiceEndpoint] = None
+    var endpoints: List[CxfServiceEndpoint] = serviceEndpointMap.getOrElse(serviceName, Nil)
+    var endpointToDelete: Option[CxfServiceEndpoint] = None
     if (endpoints != Nil) {
       for (endpoint <- endpoints) {
-        val serviceProxyImplName = ScalaCxfEndpointUtils.serviceProxyImplName(endpointDescription)
+        val serviceProxyImplName = CxfEndpointUtils.serviceProxyImplName(endpointDescription)
         if (serviceProxyImplName != None && serviceProxyImplName.equals(endpoint.serviceProxyImplName)) {
           endpointToDelete = Some(endpoint);
 
@@ -86,6 +86,7 @@ object ScalaZookeeperServiceTracker {
     }
   }
 
+  
   def service(serviceClass: Class[_]): Option[Any] = {
     service(serviceClass, None);
   }
@@ -102,15 +103,15 @@ object ScalaZookeeperServiceTracker {
     }
   }
 
-  def serviceEndpoint(serviceClass: Class[_]): Option[ScalaCxfServiceEndpoint] = {
+  def serviceEndpoint(serviceClass: Class[_]): Option[CxfServiceEndpoint] = {
     serviceEndpoint(serviceClass, None)
   }
 
-  def serviceEndpoint(serviceClass: Class[_], serviceImplName: String): Option[ScalaCxfServiceEndpoint] = {
+  def serviceEndpoint(serviceClass: Class[_], serviceImplName: String): Option[CxfServiceEndpoint] = {
     serviceEndpoint(serviceClass, Some(serviceImplName))
   }
 
-  private def serviceEndpoint(serviceClass: Class[_], serviceImplName: Option[String]): Option[ScalaCxfServiceEndpoint] = {
+  private def serviceEndpoint(serviceClass: Class[_], serviceImplName: Option[String]): Option[CxfServiceEndpoint] = {
     val serviceName = serviceClass.getName()
 
     // First check if the service is currently available ... 
@@ -136,9 +137,9 @@ object ScalaZookeeperServiceTracker {
         for (serviceNode <- serviceNodes) {
           val data: Array[Byte] = curatorClient.getData().forPath(zooKeeperServicePath + "/" + serviceNode)
           val firstEndpointDescription = interfaceMonitor.getFirstEnpointDescription(data)
-          val serviceProxy = ScalaCxfWSDLUtils.proxy(serviceClass, firstEndpointDescription)
+          val serviceProxy = CxfWSDLUtils.proxy(serviceClass, firstEndpointDescription)
 
-          if (serviceProxy != None) endpoints = new ScalaCxfServiceEndpoint(firstEndpointDescription, serviceProxy.get) :: endpoints
+          if (serviceProxy != None) endpoints = new CxfServiceEndpoint(firstEndpointDescription, serviceProxy.get) :: endpoints
         }
 
         serviceEndpointMap.put(serviceName, endpoints)
@@ -149,14 +150,14 @@ object ScalaZookeeperServiceTracker {
     endpoint
   }
 
-  private def serviceEndpoint(endpoints: List[ScalaCxfServiceEndpoint], serviceImplName: Option[String]): Option[ScalaCxfServiceEndpoint] = serviceImplName match {
+  private def serviceEndpoint(endpoints: List[CxfServiceEndpoint], serviceImplName: Option[String]): Option[CxfServiceEndpoint] = serviceImplName match {
     case serviceImplName if (serviceImplName != None && !serviceImplName.isEmpty) => endpoints.find(serviceImplName == _.serviceProxyImplName)
     case _ if (endpoints == Nil) => None
     case _ => Some(endpoints(0))
   }
 
   private def startMonitor(serviceName: String): InterfaceMonitor = {
-    val cxfEndpointListener = new ScalaCxfEndpointListener()
+    val cxfEndpointListener = new CxfEndpointListener()
     val monitor = new InterfaceMonitor(zooKeeperClient, serviceName, cxfEndpointListener, ServiceScope)
     serviceMonitorMap.put(serviceName, monitor)
     monitor.start()
@@ -164,6 +165,4 @@ object ScalaZookeeperServiceTracker {
   }
 }
 
-class ScalaZookeeperServiceTracker {
-
-}
+class ZookeeperServiceTracker
