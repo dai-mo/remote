@@ -19,6 +19,7 @@ import org.osgi.service.remoteserviceadmin.EndpointDescription
 import org.slf4j.LoggerFactory
 import org.apache.curator.framework.CuratorFramework
 import org.apache.zookeeper.ZooKeeper
+import scala.reflect.ClassTag
 
 object ZookeeperServiceTracker {
 
@@ -87,32 +88,32 @@ object ZookeeperServiceTracker {
   }
 
   
-  def service(serviceClass: Class[_]): Option[Any] = {
-    service(serviceClass, None);
+  def service[T](implicit tag: ClassTag[T]): Option[T] = {
+    service[T](None)
   }
 
-  def service(serviceClass: Class[_], serviceImplName: String): Option[Any] = {
-    service(serviceClass, Some(serviceImplName))
+  def service[T](serviceImplName: String)(implicit tag: ClassTag[T]): Option[T] = {
+    service[T](Some(serviceImplName))
   }
 
-  private def service(serviceClass: Class[_], serviceImplName: Option[String]): Option[Any] = {
-    val endpoint = serviceEndpoint(serviceClass, serviceImplName)
+  private def service[T](serviceImplName: Option[String])(implicit tag: ClassTag[T]): Option[T] = {
+    val endpoint = serviceEndpoint[T](serviceImplName)
     endpoint match {
       case endpoint if (endpoint == None) => None
-      case _                              => Some(endpoint.get.serviceProxy_)
+      case _                              => Some(endpoint.get.proxy.asInstanceOf[T])
     }
   }
 
-  def serviceEndpoint(serviceClass: Class[_]): Option[CxfServiceEndpoint] = {
-    serviceEndpoint(serviceClass, None)
+  def serviceEndpoint[T]()(implicit tag: ClassTag[T]): Option[CxfServiceEndpoint] = {
+    serviceEndpoint[T](None)
   }
 
-  def serviceEndpoint(serviceClass: Class[_], serviceImplName: String): Option[CxfServiceEndpoint] = {
-    serviceEndpoint(serviceClass, Some(serviceImplName))
+  def serviceEndpoint[T](serviceImplName: String)(implicit tag: ClassTag[T]): Option[CxfServiceEndpoint] = {
+    serviceEndpoint[T](Some(serviceImplName))
   }
 
-  private def serviceEndpoint(serviceClass: Class[_], serviceImplName: Option[String]): Option[CxfServiceEndpoint] = {
-    val serviceName = serviceClass.getName()
+  private def serviceEndpoint[T](serviceImplName: Option[String])(implicit tag: ClassTag[T]): Option[CxfServiceEndpoint] = {
+    val serviceName = tag.runtimeClass.getName
 
     // First check if the service is currently available ... 
     var endpoints = serviceEndpointMap.getOrElse(serviceName, Nil)
@@ -137,9 +138,9 @@ object ZookeeperServiceTracker {
         for (serviceNode <- serviceNodes) {
           val data: Array[Byte] = curatorClient.getData().forPath(zooKeeperServicePath + "/" + serviceNode)
           val firstEndpointDescription = interfaceMonitor.getFirstEnpointDescription(data)
-          val serviceProxy = CxfWSDLUtils.proxy(serviceClass, firstEndpointDescription)
+          val serviceProxy = CxfWSDLUtils.proxy(tag.runtimeClass, firstEndpointDescription)
 
-          if (serviceProxy != None) endpoints = new CxfServiceEndpoint(firstEndpointDescription, serviceProxy.get) :: endpoints
+          if (serviceProxy != None) endpoints = new CxfServiceEndpoint(firstEndpointDescription, serviceProxy.get.asInstanceOf[T]) :: endpoints
         }
 
         serviceEndpointMap.put(serviceName, endpoints)

@@ -80,12 +80,12 @@ class ZookeeperWSDLSpec extends RemoteBaseUnitSpec {
 
     // Check Single Impl Test Service Impl is retrieved
 
-    var service = ZookeeperServiceTracker.service(classOf[SingleImplTestService])
+    var service = ZookeeperServiceTracker.service[SingleImplTestService]
 
     service should not be (None)
     assert(service.get.isInstanceOf[SingleImplTestService])    
     
-    var endpoint = ZookeeperServiceTracker.serviceEndpoint(classOf[SingleImplTestService]); 
+    var endpoint = ZookeeperServiceTracker.serviceEndpoint[SingleImplTestService]
     endpoint.get.serviceProxyImplName should be (None)
 
     // Delete A and B Test Service Impl nodes
@@ -99,17 +99,17 @@ class ZookeeperWSDLSpec extends RemoteBaseUnitSpec {
     logger.warn("Waiting for service node delete to be triggered")
     Thread.sleep(2000)
 
-    ZookeeperServiceTracker.service(classOf[SingleImplTestService]) should be (None)
+    ZookeeperServiceTracker.service[SingleImplTestService] should be (None)
 
     client.create().creatingParentsIfNeeded().forPath(SingleImplTestServicePath, abytes);
     logger.warn("Waiting for service node add to be triggered");
     Thread.sleep(2000);
 
-    service = ZookeeperServiceTracker.service(classOf[SingleImplTestService])
+    service = ZookeeperServiceTracker.service[SingleImplTestService]
     service should not be (None)
     assert(service.get.isInstanceOf[SingleImplTestService])   
     
-    endpoint = ZookeeperServiceTracker.serviceEndpoint(classOf[SingleImplTestService]); 
+    endpoint = ZookeeperServiceTracker.serviceEndpoint[SingleImplTestService]
     endpoint.get.serviceProxyImplName should be (None)
   }
 
@@ -125,12 +125,12 @@ class ZookeeperWSDLSpec extends RemoteBaseUnitSpec {
 
     // Check A Test Service Impl is retrived
 
-    var service = ZookeeperServiceTracker.service(classOf[MultiImplTestService])
+    var service = ZookeeperServiceTracker.service[MultiImplTestService]
 
     service should not be (None)
     assert(service.get.isInstanceOf[MultiImplTestService])
     
-    var endpoint = ZookeeperServiceTracker.serviceEndpoint(classOf[MultiImplTestService])
+    var endpoint = ZookeeperServiceTracker.serviceEndpoint[MultiImplTestService]
     endpoint.get.serviceProxyImplName.get should be (ATestServiceImplName)
 
     path = Paths.get(this.getClass().getResource("BTestServiceData.xml").toURI())
@@ -143,12 +143,12 @@ class ZookeeperWSDLSpec extends RemoteBaseUnitSpec {
     assert(expected == nodeData)
 
     // Check A Test Service Impl is retrived
-    service = ZookeeperServiceTracker.service(classOf[MultiImplTestService], BTestServiceImplName)
+    service = ZookeeperServiceTracker.service[MultiImplTestService]
 
     service should not be (None)
     assert(service.get.isInstanceOf[MultiImplTestService])
     
-    endpoint = ZookeeperServiceTracker.serviceEndpoint(classOf[MultiImplTestService], BTestServiceImplName)
+    endpoint = ZookeeperServiceTracker.serviceEndpoint[MultiImplTestService](BTestServiceImplName)
     endpoint.get.serviceProxyImplName.get should be (BTestServiceImplName)
 
     // Delete A and B Test Service Impl nodes
@@ -162,19 +162,19 @@ class ZookeeperWSDLSpec extends RemoteBaseUnitSpec {
     logger.warn("Waiting for service node delete to be triggered")
     Thread.sleep(2000)
 
-    ZookeeperServiceTracker.service(classOf[MultiImplTestService]) should be (None)
+    ZookeeperServiceTracker.service[MultiImplTestService] should be (None)
 
     client.create().creatingParentsIfNeeded().forPath(ATestServicePath, abytes)
 
     logger.warn("Waiting for service node add to be triggered")
     Thread.sleep(2000)
 
-    service = ZookeeperServiceTracker.service(classOf[MultiImplTestService], ATestServiceImplName)
+    service = ZookeeperServiceTracker.service[MultiImplTestService]
 
     service should not be (None)
     assert(service.get.isInstanceOf[MultiImplTestService])
     
-    endpoint = ZookeeperServiceTracker.serviceEndpoint(classOf[MultiImplTestService], ATestServiceImplName)
+    endpoint = ZookeeperServiceTracker.serviceEndpoint[MultiImplTestService](ATestServiceImplName)
     endpoint.get.serviceProxyImplName.get should be (ATestServiceImplName)
   }
 }

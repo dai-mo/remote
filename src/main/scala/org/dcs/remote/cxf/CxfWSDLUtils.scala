@@ -21,7 +21,7 @@ object CxfWSDLUtils {
 
   private val logger = LoggerFactory.getLogger(classOf[CxfWSDLUtils])
 
-  def proxy(iClass: Class[_], endpointDescription: EndpointDescription): Option[Any] = {
+  def proxy(iClass: Class[_], endpointDescription: EndpointDescription): Option[AnyRef] = {
 
     var wsdlAddress: Option[URL] =
       try {

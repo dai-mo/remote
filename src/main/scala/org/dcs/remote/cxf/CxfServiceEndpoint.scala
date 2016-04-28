@@ -6,5 +6,5 @@ class CxfServiceEndpoint(endpointDescription: EndpointDescription , serviceProxy
 
 	val serviceProxyImplName: Option[String] = CxfEndpointUtils.serviceProxyImplName(endpointDescription);
 	
-	def serviceProxy_ = serviceProxy
+	var proxy = serviceProxy
 }

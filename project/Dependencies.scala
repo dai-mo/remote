@@ -3,7 +3,8 @@ import sbt._
 object Dependencies {
 
 	    // Versions
-	    lazy val dcsTestVersion   = "1.0.0-SNAPSHOT"	   
+	    lazy val dcsApiVersion   = "1.0.0-SNAPSHOT"	   
+	    lazy val dcsTestVersion   = "1.0.0-SNAPSHOT"
 	    lazy val dcsCommonsVersion= "1.0.0-SNAPSHOT"	   
 	    lazy val servletVersion   = "3.1.0"
 	    lazy val felixVersion     = "5.4.0"
@@ -19,6 +20,7 @@ object Dependencies {
 
 
 			// Libraries
+			val dcsApi          = "org.dcs"                          % "org.dcs.api"                        % dcsApiVersion
 			val dcsTest         = "org.dcs"                          % "org.dcs.test"                       % dcsTestVersion
 			val dcsCommons      = "org.dcs"                          % "org.dcs.commons"                    % dcsCommonsVersion
 			val servletApi      = "javax.servlet"                    % "javax.servlet-api"                  % servletVersion
@@ -57,6 +59,7 @@ object Dependencies {
 					jksonDatabind,
 					jksonDataFormat,
 
+					dcsApi          % "test",
 					dcsTest         % "test",
 					scalaTest       % "test",
 					junitInterface  % "test"

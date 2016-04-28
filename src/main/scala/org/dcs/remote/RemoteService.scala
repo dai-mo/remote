@@ -1,11 +1,13 @@
 package org.dcs.remote
 
+import scala.reflect.ClassTag
+
 object RemoteService {
   
   ZookeeperServiceTracker.start
   
-	def service(serviceClass: Class[_]): Option[Any] = {
-		ZookeeperServiceTracker.service(serviceClass)
+	def service[T](implicit tag: ClassTag[T]): Option[T] = {
+		ZookeeperServiceTracker.service[T]
 	}
 
 	def close  =  {
