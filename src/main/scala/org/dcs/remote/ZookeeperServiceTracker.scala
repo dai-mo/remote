@@ -20,9 +20,10 @@ import org.slf4j.LoggerFactory
 import org.apache.curator.framework.CuratorFramework
 import org.apache.zookeeper.ZooKeeper
 import scala.reflect.ClassTag
+import org.dcs.remote.ZookeeperServiceTracker._
 
 object ZookeeperServiceTracker {
-
+  
   val logger = LoggerFactory.getLogger(classOf[ZookeeperServiceTracker])
 
   val ServiceScope = "singleton"
@@ -36,9 +37,11 @@ object ZookeeperServiceTracker {
 
   var serviceEndpointMap = new ConcurrentHashMap[String, List[CxfServiceEndpoint]]()
   val serviceMonitorMap = new ConcurrentHashMap[String, InterfaceMonitor]()
+  
+}
 
-  start
-
+trait ZookeeperServiceTracker extends ServiceTracker {
+  
   def start {
     if (curatorClient == null || curatorClient.getState == CuratorFrameworkState.STOPPED) {
       curatorClient = CuratorFrameworkFactory.newClient(config.zookeeperServers, retryPolicy)
@@ -158,12 +161,10 @@ object ZookeeperServiceTracker {
   }
 
   private def startMonitor(serviceName: String): InterfaceMonitor = {
-    val cxfEndpointListener = new CxfEndpointListener()
+    val cxfEndpointListener = new CxfEndpointListener(this)
     val monitor = new InterfaceMonitor(zooKeeperClient, serviceName, cxfEndpointListener, ServiceScope)
     serviceMonitorMap.put(serviceName, monitor)
     monitor.start()
     monitor
   }
 }
-
-class ZookeeperServiceTracker

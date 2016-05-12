@@ -6,20 +6,20 @@ import org.slf4j.LoggerFactory
 import org.dcs.remote.ZookeeperServiceTracker
 
 
-class CxfEndpointListener extends EndpointListener {
+class CxfEndpointListener(zst: ZookeeperServiceTracker) extends EndpointListener {
   private val logger = LoggerFactory.getLogger(classOf[CxfEndpointListener]);
-
+  
   def endpointAdded(endpointDescription: EndpointDescription, matchedFilter: String) {
     val serviceNames: Array[String] = CxfEndpointUtils.serviceInterfaceNames(endpointDescription);
     for (serviceName <- serviceNames) {
-      ZookeeperServiceTracker.addEndpoint(serviceName, endpointDescription)
+      zst.addEndpoint(serviceName, endpointDescription)
     }
   }
 
   def endpointRemoved(endpointDescription: EndpointDescription, matchedFilter: String) {
     val serviceNames: Array[String] = CxfEndpointUtils.serviceInterfaceNames(endpointDescription);
     for (serviceName <- serviceNames) {
-      ZookeeperServiceTracker.removeEndpoint(serviceName, endpointDescription)
+      zst.removeEndpoint(serviceName, endpointDescription)
     }
   }
 }

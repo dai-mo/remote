@@ -5,8 +5,7 @@ import javax.servlet.ServletContextEvent
 import java.util.logging.LogManager
 import java.util.logging.Level
 
-object StartupListener extends ServletContextListener {
-   
+class StartupListener extends ServletContextListener {   
 
     def contextInitialized(event: ServletContextEvent) = {
         // The atmosphere framework (included in vaadin)
@@ -19,7 +18,7 @@ object StartupListener extends ServletContextListener {
     }
 
     def contextDestroyed(event: ServletContextEvent) = {
-    	RemoteService.close
+    	ZkRemoteService.close
     }
   
 }
