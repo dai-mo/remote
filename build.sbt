@@ -2,7 +2,7 @@ import Dependencies._
 import Common._
 
 
-lazy val root = (project in file(".")).
+lazy val remote = (project in file(".")).
   configs(IntegrationTest).
   settings(commonSettings: _*).
   settings(Defaults.itSettings: _*).
