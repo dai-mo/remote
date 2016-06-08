@@ -1,16 +1,32 @@
 package org.dcs.remote
 
-import scala.reflect.ClassTag
+import org.dcs.api.error.{ErrorConstants, RESTException}
 
-trait RemoteService {
+import scala.reflect.ClassTag
+import scala.util.control.NonFatal
+
+class  RemoteService {
   this: ServiceTracker =>
 
   start
 
-  def loadService[T](implicit tag: ClassTag[T]): Option[T] = service[T]
+  def loadService[T](implicit tag: ClassTag[T]): T = {
+    try {
+      val s = service[T]
+      if(s == None) throw new RESTException(ErrorConstants.DCS201) else s.get
+    } catch {
+      case NonFatal(t) => throw new RESTException(ErrorConstants.DCS201)
+    }
+  }
+  def loadService[T](serviceImplName: String)(implicit tag: ClassTag[T]) =  {
+    try {
+      val s = service[T](serviceImplName)
+      if(s == None) throw new RESTException(ErrorConstants.DCS201) else s.get
+    } catch {
+      case NonFatal(t) => throw new RESTException(ErrorConstants.DCS201)
+    }
+  }
 
-  def loadService[T](serviceImplName: String)(implicit tag: ClassTag[T]) =  service[T](serviceImplName)
-  
   def dispose = close
 
 }
