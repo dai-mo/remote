@@ -16,7 +16,7 @@ object Dependencies {
 			lazy val zookeeperVersion = "3.4.7"
 			lazy val scalaTestVersion = "2.2.6"
 			lazy val juiVersion       = "0.11"
-			lazy val jacksonVersion   = "2.4.5"
+			lazy val jacksonVersion   = "2.7.2"
 
 
 			// Libraries
