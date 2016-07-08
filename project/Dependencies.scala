@@ -5,7 +5,7 @@ object Dependencies {
 	    // Versions	    
 	    lazy val dcsTestVersion   = "0.1.0"
 	    lazy val dcsCommonsVersion= "0.1.0"
-      lazy val dcsApiVersion    = "0.1.0"
+      lazy val dcsApiVersion    = "0.2.0-SNAPSHOT"
 	    lazy val servletVersion   = "3.1.0"
 	    lazy val felixVersion     = "5.4.0"
 	    lazy val cxfDosgiVersion  = "1.7.0"
@@ -44,7 +44,7 @@ object Dependencies {
 			// Dependencies
 			val remoteDependencies = Seq(
 			    dcsCommons,
-          dcsApi,
+          dcsApi % "provided",
 			    servletApi,
 			    felix,
 			    cxfDosgi,
