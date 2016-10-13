@@ -1,26 +1,22 @@
 package org.dcs.remote
 
 import java.util.concurrent.ConcurrentHashMap
-import scala.collection.JavaConversions.asScalaBuffer
-import scala.collection.JavaConversions.collectionAsScalaIterable
-import scala.collection.JavaConversions.mapAsScalaConcurrentMap
-import scala.collection.JavaConversions.seqAsJavaList
-import org.apache.curator.framework.CuratorFrameworkFactory
+
+import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
 import org.apache.curator.framework.imps.CuratorFrameworkState
 import org.apache.curator.retry.ExponentialBackoffRetry
 import org.apache.cxf.dosgi.discovery.zookeeper.subscribe.InterfaceMonitor
 import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils
-import org.dcs.commons.config.ConfigurationFacade
-import org.dcs.remote.cxf.CxfEndpointListener
-import org.dcs.remote.cxf.CxfEndpointUtils
-import org.dcs.remote.cxf.CxfServiceEndpoint
-import org.dcs.remote.cxf.CxfWSDLUtils
+import org.apache.zookeeper.ZooKeeper
+import org.dcs.commons.config.{GlobalConfiguration, GlobalConfigurator}
+import org.dcs.remote.ZookeeperServiceTracker._
+import org.dcs.commons.YamlSerializerImplicits._
+import org.dcs.remote.cxf.{CxfEndpointListener, CxfEndpointUtils, CxfServiceEndpoint, CxfWSDLUtils}
 import org.osgi.service.remoteserviceadmin.EndpointDescription
 import org.slf4j.LoggerFactory
-import org.apache.curator.framework.CuratorFramework
-import org.apache.zookeeper.ZooKeeper
+
+import scala.collection.JavaConversions.{asScalaBuffer, collectionAsScalaIterable, mapAsScalaConcurrentMap}
 import scala.reflect.ClassTag
-import org.dcs.remote.ZookeeperServiceTracker._
 
 object ZookeeperServiceTracker {
   
@@ -28,7 +24,7 @@ object ZookeeperServiceTracker {
 
   val ServiceScope = "singleton"
 
-  val config = ConfigurationFacade.config
+  val config = GlobalConfigurator.config.toObject[GlobalConfiguration]
 
   val retryPolicy = new ExponentialBackoffRetry(1000, 3)
 
