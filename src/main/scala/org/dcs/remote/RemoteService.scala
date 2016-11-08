@@ -1,6 +1,6 @@
 package org.dcs.remote
 
-import org.dcs.api.error.{ErrorConstants, RESTException}
+import org.dcs.commons.error.{ErrorConstants, RESTException}
 
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
