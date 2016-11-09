@@ -10,7 +10,7 @@ import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils
 import org.apache.zookeeper.ZooKeeper
 import org.dcs.commons.config.{GlobalConfiguration, GlobalConfigurator}
 import org.dcs.remote.ZookeeperServiceTracker._
-import org.dcs.commons.YamlSerializerImplicits._
+import org.dcs.commons.serde.YamlSerializerImplicits._
 import org.dcs.remote.cxf.{CxfEndpointListener, CxfEndpointUtils, CxfServiceEndpoint, CxfWSDLUtils}
 import org.osgi.service.remoteserviceadmin.EndpointDescription
 import org.slf4j.LoggerFactory
