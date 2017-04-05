@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8'?><wsdl:definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://service.api.dcs.org/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:ns1="http://schemas.xmlsoap.org/soap/http" name="StatefulStatefulRemoteProcessorService" targetNamespace="http://service.api.dcs.org/">
+  <wsdl:types>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://service.api.dcs.org/" attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="http://service.api.dcs.org/">
+  <xsd:element name="testMethod" type="tns:testMethod"/>
+  <xsd:complexType name="testMethod">
+    <xsd:sequence/>
+  </xsd:complexType>
+  <xsd:element name="testMethodResponse" type="tns:testMethodResponse"/>
+  <xsd:complexType name="testMethodResponse">
+    <xsd:sequence/>
+  </xsd:complexType>
+</xsd:schema>
+  </wsdl:types>
+  <wsdl:message name="testMethodResponse">
+    <wsdl:part element="tns:testMethodResponse" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="testMethod">
+    <wsdl:part element="tns:testMethod" name="parameters">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="StatefulRemoteProcessorServicePortType">
+    <wsdl:operation name="testMethod">
+      <wsdl:input message="tns:testMethod" name="testMethod">
+    </wsdl:input>
+      <wsdl:output message="tns:testMethodResponse" name="testMethodResponse">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="StatefulRemoteProcessorServiceSoapBinding" type="tns:StatefulRemoteProcessorServicePortType">
+    <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="testMethod">
+      <soap:operation soapAction="" style="document"/>
+      <wsdl:input name="testMethod">
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output name="testMethodResponse">
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="StatefulRemoteProcessorService">
+    <wsdl:port binding="tns:StatefulRemoteProcessorServiceSoapBinding" name="StatefulRemoteProcessorServicePort">
+      <soap:address location="http://dcs-core:8181/cxf/org/dcs/api/service/StatefulTestService"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

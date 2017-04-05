@@ -1,25 +1,32 @@
 package org.dcs.remote
 
+import java.io.ByteArrayInputStream
+import java.util.{List => JavaList}
 import java.util.concurrent.ConcurrentHashMap
 
-import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
 import org.apache.curator.framework.imps.CuratorFrameworkState
+import org.apache.curator.framework.recipes.cache.PathChildrenCache.StartMode
+import org.apache.curator.framework.recipes.cache.{ChildData, PathChildrenCache}
+import org.apache.curator.framework.{CuratorFramework, CuratorFrameworkFactory}
 import org.apache.curator.retry.ExponentialBackoffRetry
 import org.apache.cxf.dosgi.discovery.zookeeper.subscribe.InterfaceMonitor
 import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils
+import org.apache.cxf.dosgi.endpointdesc.{EndpointDescriptionParser, PropertiesMapper}
 import org.apache.zookeeper.ZooKeeper
 import org.dcs.commons.config.{GlobalConfiguration, GlobalConfigurator}
-import org.dcs.remote.ZookeeperServiceTracker._
 import org.dcs.commons.serde.YamlSerializerImplicits._
+import org.dcs.remote.ZookeeperServiceTracker._
 import org.dcs.remote.cxf.{CxfEndpointListener, CxfEndpointUtils, CxfServiceEndpoint, CxfWSDLUtils}
 import org.osgi.service.remoteserviceadmin.EndpointDescription
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions.{asScalaBuffer, collectionAsScalaIterable, mapAsScalaConcurrentMap}
 import scala.reflect.ClassTag
+import org.dcs.api.service.ProcessorServiceDefinition
+import scala.collection.JavaConverters._
 
 object ZookeeperServiceTracker {
-  
+
   val logger = LoggerFactory.getLogger(classOf[ZookeeperServiceTracker])
 
   val ServiceScope = "singleton"
@@ -33,16 +40,36 @@ object ZookeeperServiceTracker {
 
   var serviceEndpointMap = new ConcurrentHashMap[String, List[CxfServiceEndpoint]]()
   val serviceMonitorMap = new ConcurrentHashMap[String, InterfaceMonitor]()
-  
+
+  val CxfPathPrefix = "/osgi/service_registry"
+  val StatelessRemoteServicePath: String = CxfPathPrefix + "/org/dcs/api/service/RemoteProcessorService"
+  val StatefulRemoteServicePath: String = CxfPathPrefix + "/org/dcs/api/service/StatefulRemoteProcessorService"
+
+  var statelessProcessorServicesCache: PathChildrenCache = _
+  var statefulProcessorServicesCache: PathChildrenCache = _
+
+
 }
 
 trait ZookeeperServiceTracker extends ServiceTracker {
-  
+
+  val edParser = new EndpointDescriptionParser
+
   def start {
     if (curatorClient == null || curatorClient.getState == CuratorFrameworkState.STOPPED) {
       curatorClient = CuratorFrameworkFactory.newClient(config.zookeeperServers, retryPolicy)
       curatorClient.start()
-      zooKeeperClient = curatorClient.getZookeeperClient().getZooKeeper()
+      zooKeeperClient = curatorClient.getZookeeperClient.getZooKeeper
+    }
+  }
+
+  def loadServiceCaches(): Unit = {
+    if (curatorClient != null) {
+      statelessProcessorServicesCache = new PathChildrenCache(curatorClient, StatelessRemoteServicePath, true)
+      statelessProcessorServicesCache.start(StartMode.BUILD_INITIAL_CACHE)
+
+      statefulProcessorServicesCache = new PathChildrenCache(curatorClient, StatefulRemoteServicePath, true)
+      statefulProcessorServicesCache.start(StartMode.BUILD_INITIAL_CACHE)
     }
   }
 
@@ -50,7 +77,23 @@ trait ZookeeperServiceTracker extends ServiceTracker {
     for (monitor: InterfaceMonitor <- serviceMonitorMap.values) {
       monitor.close()
     }
-    curatorClient.close()
+
+    if(statelessProcessorServicesCache != null) statelessProcessorServicesCache.close()
+    if(statefulProcessorServicesCache != null) statefulProcessorServicesCache.close()
+    if(curatorClient != null) curatorClient.close()
+  }
+
+  def filterServiceByProperty(serviceNodes: List[ChildData], property: String, regex: String): List[ProcessorServiceDefinition] = {
+    val pm = new PropertiesMapper
+    serviceNodes
+      .map(sn => pm.toProps(edParser.getEndpointDescriptions(new ByteArrayInputStream(sn.getData)).head.getProperty))
+      .filter(props => CxfEndpointUtils.matchesPropertyValue(props, property, regex))
+      .map(props => CxfEndpointUtils.toProcessorServiceDefinition(props))
+  }
+
+  def filterServiceByProperty(property: String, regex: String): List[ProcessorServiceDefinition] = {
+    filterServiceByProperty(statelessProcessorServicesCache.getCurrentData.asScala.toList, property, regex) ++
+      filterServiceByProperty(statefulProcessorServicesCache.getCurrentData.asScala.toList, property, regex)
   }
 
   def addEndpoint(serviceName: String, endpointDescription: EndpointDescription) {
@@ -86,7 +129,7 @@ trait ZookeeperServiceTracker extends ServiceTracker {
     }
   }
 
-  
+
   def service[T](implicit tag: ClassTag[T]): Option[T] = {
     service[T](None)
   }
@@ -114,7 +157,7 @@ trait ZookeeperServiceTracker extends ServiceTracker {
   private def serviceEndpoint[T](serviceImplName: Option[String])(implicit tag: ClassTag[T]): Option[CxfServiceEndpoint] = {
     val serviceName = tag.runtimeClass.getName
 
-    // First check if the service is currently available ... 
+    // First check if the service is currently available ...
     var endpoints = serviceEndpointMap.getOrElse(serviceName, Nil)
 
     var endpoint = serviceEndpoint(endpoints, serviceImplName)
@@ -124,7 +167,7 @@ trait ZookeeperServiceTracker extends ServiceTracker {
       // .. if not, check if there exists a monitor tracking it
       var interfaceMonitor = serviceMonitorMap.get(serviceName)
       if (interfaceMonitor == null) {
-        // .. if not, start and register a monitor for the service name 
+        // .. if not, start and register a monitor for the service name
         interfaceMonitor = startMonitor(serviceName)
       }
 
