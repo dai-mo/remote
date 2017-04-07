@@ -167,7 +167,10 @@ class ZookeeperWSDLSpec extends ZookeeperBaseUnitSpec {
       StatefulTestProcessorServiceClassName)
 
     ZkRemoteService.loadServiceCaches()
-    var pds = ZkRemoteService.filterServiceByProperty(CxfEndpointUtils.TagsKey, ".*TEST.*")
+    var pds = ZkRemoteService.services()
+    assert(pds.size == 2)
+
+    pds = ZkRemoteService.filterServiceByProperty(CxfEndpointUtils.TagsKey, ".*TEST.*")
     assert(pds.size == 2)
     assert(pds.exists(_.processorServiceClassName == StatefulTestProcessorServiceClassName))
     assert(pds.exists(_.processorServiceClassName == StatelessTestProcessorServiceClassName))

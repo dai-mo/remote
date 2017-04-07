@@ -1,14 +1,8 @@
 package org.dcs.remote.cxf
 
-import java.util
-import java.util.Map
 
-import org.apache.cxf.dosgi.endpointdesc.PropertiesMapper
 import org.dcs.api.service.ProcessorServiceDefinition
 import org.osgi.service.remoteserviceadmin.EndpointDescription
-import org.osgi.xmlns.rsa.v1_0.EndpointDescriptionType
-
-import scala.collection.JavaConverters._
 
 object CxfEndpointUtils {
   private val CxfBasePath: String = "cxf/"
@@ -36,23 +30,23 @@ object CxfEndpointUtils {
 	}
 
 	def serviceProxyImplName(endpointId: String): Option[String] = {
-		val indexOfCxfBasePath = endpointId.indexOf(CxfBasePath);
+		val indexOfCxfBasePath = endpointId.indexOf(CxfBasePath)
 		var name: Option[String] = None
 		if(indexOfCxfBasePath != -1) {
-			val startIndex = endpointId.indexOf(CxfBasePath) + CxfBasePath.length();
+			val startIndex = endpointId.indexOf(CxfBasePath) + CxfBasePath.length()
 			name = Some(endpointId.substring(startIndex).replaceAll("/", "."))
 		}
 		name
 	}
 
-  def matchesPropertyValue(props: util.Map[String, AnyRef], property: String, regex: String): Boolean = {
-    val propertyValue = Option(props.get(property)).map(_.asInstanceOf[String])
+  def matchesPropertyValue(props: Map[String, AnyRef], property: String, regex: String): Boolean = {
+    val propertyValue = props.get(property).map(_.asInstanceOf[String])
     if(propertyValue.isDefined) propertyValue.get.matches("(?i)" + regex) else false
   }
 
-	def toProcessorServiceDefinition(props: util.Map[String, AnyRef]): ProcessorServiceDefinition = {
-    ProcessorServiceDefinition(serviceProxyImplName(props.get(EndpointIdKey).asInstanceOf[String]).get,
-      props.get(ProcessorTypeKey).asInstanceOf[String],
-      props.get(ObjectClassKey).asInstanceOf[Array[String]].contains(StatefulServiceInterface))
+	def toProcessorServiceDefinition(props: Map[String, AnyRef]): ProcessorServiceDefinition = {
+    ProcessorServiceDefinition(props.get(EndpointIdKey).map(_.asInstanceOf[String]).flatMap(serviceProxyImplName).get,
+      props.get(ProcessorTypeKey).map(_.asInstanceOf[String]).get,
+      props.get(ObjectClassKey).map(_.asInstanceOf[Array[String]].contains(StatefulServiceInterface)).get)
 	}
 }

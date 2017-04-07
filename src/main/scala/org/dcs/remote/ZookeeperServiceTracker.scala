@@ -1,8 +1,8 @@
 package org.dcs.remote
 
 import java.io.ByteArrayInputStream
-import java.util.{List => JavaList}
 import java.util.concurrent.ConcurrentHashMap
+import java.util.{List => JavaList}
 
 import org.apache.curator.framework.imps.CuratorFrameworkState
 import org.apache.curator.framework.recipes.cache.PathChildrenCache.StartMode
@@ -13,6 +13,7 @@ import org.apache.cxf.dosgi.discovery.zookeeper.subscribe.InterfaceMonitor
 import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils
 import org.apache.cxf.dosgi.endpointdesc.{EndpointDescriptionParser, PropertiesMapper}
 import org.apache.zookeeper.ZooKeeper
+import org.dcs.api.service.ProcessorServiceDefinition
 import org.dcs.commons.config.{GlobalConfiguration, GlobalConfigurator}
 import org.dcs.commons.serde.YamlSerializerImplicits._
 import org.dcs.remote.ZookeeperServiceTracker._
@@ -21,9 +22,8 @@ import org.osgi.service.remoteserviceadmin.EndpointDescription
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions.{asScalaBuffer, collectionAsScalaIterable, mapAsScalaConcurrentMap}
-import scala.reflect.ClassTag
-import org.dcs.api.service.ProcessorServiceDefinition
 import scala.collection.JavaConverters._
+import scala.reflect.ClassTag
 
 object ZookeeperServiceTracker {
 
@@ -65,11 +65,14 @@ trait ZookeeperServiceTracker extends ServiceTracker {
 
   def loadServiceCaches(): Unit = {
     if (curatorClient != null) {
-      statelessProcessorServicesCache = new PathChildrenCache(curatorClient, StatelessRemoteServicePath, true)
-      statelessProcessorServicesCache.start(StartMode.BUILD_INITIAL_CACHE)
-
-      statefulProcessorServicesCache = new PathChildrenCache(curatorClient, StatefulRemoteServicePath, true)
-      statefulProcessorServicesCache.start(StartMode.BUILD_INITIAL_CACHE)
+      if(statelessProcessorServicesCache == null) {
+        statelessProcessorServicesCache = new PathChildrenCache(curatorClient, StatelessRemoteServicePath, true)
+        statelessProcessorServicesCache.start(StartMode.BUILD_INITIAL_CACHE)
+      }
+      if(statefulProcessorServicesCache == null) {
+        statefulProcessorServicesCache = new PathChildrenCache(curatorClient, StatefulRemoteServicePath, true)
+        statefulProcessorServicesCache.start(StartMode.BUILD_INITIAL_CACHE)
+      }
     }
   }
 
@@ -83,17 +86,26 @@ trait ZookeeperServiceTracker extends ServiceTracker {
     if(curatorClient != null) curatorClient.close()
   }
 
-  def filterServiceByProperty(serviceNodes: List[ChildData], property: String, regex: String): List[ProcessorServiceDefinition] = {
+  def serviceProperties(serviceNodes: List[ChildData]): List[Map[String, AnyRef]] = {
     val pm = new PropertiesMapper
     serviceNodes
-      .map(sn => pm.toProps(edParser.getEndpointDescriptions(new ByteArrayInputStream(sn.getData)).head.getProperty))
+      .map(sn => pm.toProps(edParser.getEndpointDescriptions(new ByteArrayInputStream(sn.getData)).head.getProperty).asScala.toMap)
+  }
+
+  def filterServiceByProperty(serviceProperties: List[Map[String, AnyRef]], property: String, regex: String): List[ProcessorServiceDefinition] = {
+  serviceProperties
       .filter(props => CxfEndpointUtils.matchesPropertyValue(props, property, regex))
       .map(props => CxfEndpointUtils.toProcessorServiceDefinition(props))
   }
 
-  def filterServiceByProperty(property: String, regex: String): List[ProcessorServiceDefinition] = {
-    filterServiceByProperty(statelessProcessorServicesCache.getCurrentData.asScala.toList, property, regex) ++
-      filterServiceByProperty(statefulProcessorServicesCache.getCurrentData.asScala.toList, property, regex)
+  override def filterServiceByProperty(property: String, regex: String): List[ProcessorServiceDefinition] = {
+    filterServiceByProperty(serviceProperties(statelessProcessorServicesCache.getCurrentData.asScala.toList), property, regex) ++
+      filterServiceByProperty(serviceProperties(statefulProcessorServicesCache.getCurrentData.asScala.toList), property, regex)
+  }
+
+  override def services(): List[ProcessorServiceDefinition] = {
+    serviceProperties(statelessProcessorServicesCache.getCurrentData.asScala.toList).map(props => CxfEndpointUtils.toProcessorServiceDefinition(props)) ++
+      serviceProperties(statefulProcessorServicesCache.getCurrentData.asScala.toList).map(props => CxfEndpointUtils.toProcessorServiceDefinition(props))
   }
 
   def addEndpoint(serviceName: String, endpointDescription: EndpointDescription) {
@@ -130,11 +142,11 @@ trait ZookeeperServiceTracker extends ServiceTracker {
   }
 
 
-  def service[T](implicit tag: ClassTag[T]): Option[T] = {
+  override def service[T](implicit tag: ClassTag[T]): Option[T] = {
     service[T](None)
   }
 
-  def service[T](serviceImplName: String)(implicit tag: ClassTag[T]): Option[T] = {
+  override def service[T](serviceImplName: String)(implicit tag: ClassTag[T]): Option[T] = {
     service[T](Some(serviceImplName))
   }
 
