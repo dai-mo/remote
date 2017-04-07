@@ -4,8 +4,8 @@ object Dependencies {
 
 	// Versions
 	lazy val dcsTestVersion     = "0.1.0"
-	lazy val dcsApiVersion      = "0.3.0"
-	lazy val dcsCommonsVersion  = "0.2.0"
+	lazy val dcsApiVersion      = "0.4.0-SNAPSHOT"
+	lazy val dcsCommonsVersion  = "0.3.0-SNAPSHOT"
 	lazy val servletVersion     = "3.1.0"
 	lazy val felixVersion       = "5.4.0"
 	lazy val cxfDosgiVersion    = "1.7.0"
@@ -28,6 +28,7 @@ object Dependencies {
 	val cxfDosgiLocal   = "org.apache.cxf.dosgi"             % "cxf-dosgi-ri-discovery-local"       % cxfDosgiVersion
 	val cxfDosgiDist    = "org.apache.cxf.dosgi"             % "cxf-dosgi-ri-discovery-distributed" % cxfDosgiVersion
 	val curatorClient   = "org.apache.curator"               % "curator-client"                     % curatorVersion
+	val curatorRecipes  = "org.apache.curator"               % "curator-recipes"                    % curatorVersion
 	val curator         = "org.apache.curator"               % "curator-framework"                  % curatorVersion
 	val curatorTest     = "org.apache.curator"               % "curator-test"                       % curatorVersion
 	val logbackCore     = "ch.qos.logback"                   % "logback-core"                       % logbackVersion
@@ -50,6 +51,7 @@ object Dependencies {
 		logbackClassic,
 		curator,
 		curatorClient,
+    curatorRecipes,
 		curatorTest,
 		zookeeper,
 

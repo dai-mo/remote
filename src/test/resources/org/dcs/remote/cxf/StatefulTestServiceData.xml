@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<endpoint-descriptions xmlns="http://www.osgi.org/xmlns/rsa/v1.0.0">
+    <endpoint-description>
+        <property name="endpoint.framework.uuid" value="584dfa4a-e4bd-4c2e-a4e5-e0c77893d001"/>
+        <property name="endpoint.id" value="http://dcs-core:8181/cxf/org/dcs/api/service/StatefulTestService"/>
+        <property name="endpoint.package.version.org.dcs.api.service" value="0.4.0.SNAPSHOT"/>
+        <property name="endpoint.service.id" value-type="Long" value="192"/>
+        <property name="objectClass">
+            <array>
+                <value>org.dcs.api.service.StatefulRemoteProcessorService</value>
+            </array>
+        </property>
+        <property name="org.apache.cxf.ws.address" value="StatefulTestService.wsdl"/>
+        <property name="org.dcs.processor.tags" value="test,sTatefuL"/>
+        <property name="org.dcs.processor.type" value="INGESTION"/>
+        <property name="service.bundleid" value-type="Long" value="229"/>
+        <property name="service.imported" value="true"/>
+        <property name="service.imported.configs">
+            <array>
+                <value>org.apache.cxf.ws</value>
+            </array>
+        </property>
+        <property name="service.intents">
+            <set/>
+        </property>
+        <property name="service.scope" value="singleton"/>
+    </endpoint-description>
+</endpoint-descriptions>
+
