@@ -9,6 +9,7 @@ class  RemoteService {
   this: ServiceTracker =>
 
   start
+  init
 
   def loadService[T](implicit tag: ClassTag[T]): T = {
     try {

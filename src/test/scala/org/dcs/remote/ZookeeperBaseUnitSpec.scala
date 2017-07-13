@@ -8,6 +8,8 @@ import org.dcs.remote.cxf.ZookeeperWSDLSpec.client
 /**
   * Created by cmathew on 05.04.17.
   */
+object zkClient extends ZookeeperServiceTracker
+
 class ZookeeperBaseUnitSpec extends RemoteBaseUnitSpec {
 
   def addService(serviceDefFileName: String,
@@ -25,7 +27,7 @@ class ZookeeperBaseUnitSpec extends RemoteBaseUnitSpec {
                                 servicePath: String,
                                 serviceClassName: String): RemoteProcessorService = {
     addService(serviceDefFileName, servicePath)
-    val service = ZkRemoteService.service[RemoteProcessorService](serviceClassName)
+    val service = zkClient.service[RemoteProcessorService](serviceClassName)
     service should not be None
     service.get
   }
@@ -34,7 +36,7 @@ class ZookeeperBaseUnitSpec extends RemoteBaseUnitSpec {
                                servicePath: String,
                                serviceClassName: String): RemoteProcessorService = {
     addService(serviceDefFileName, servicePath)
-    val service = ZkRemoteService.service[StatefulRemoteProcessorService](serviceClassName)
+    val service = zkClient.service[StatefulRemoteProcessorService](serviceClassName)
     service should not be None
     service.get
   }
