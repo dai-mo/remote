@@ -12,8 +12,9 @@ import org.apache.curator.retry.ExponentialBackoffRetry
 import org.apache.cxf.dosgi.discovery.zookeeper.subscribe.InterfaceMonitor
 import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils
 import org.apache.cxf.dosgi.endpointdesc.{EndpointDescriptionParser, PropertiesMapper}
+import org.apache.ws.commons.schema.XmlSchemaException
 import org.apache.zookeeper.ZooKeeper
-import org.dcs.api.service.ProcessorServiceDefinition
+import org.dcs.api.service.{ProcessorServiceDefinition, RemoteProcessorService, StatefulRemoteProcessorService}
 import org.dcs.commons.config.{GlobalConfiguration, GlobalConfigurator}
 import org.dcs.commons.serde.YamlSerializerImplicits._
 import org.dcs.remote.ZookeeperServiceTracker._
@@ -60,6 +61,23 @@ trait ZookeeperServiceTracker extends ServiceTracker {
       curatorClient = CuratorFrameworkFactory.newClient(config.zookeeperServers, retryPolicy)
       curatorClient.start()
       zooKeeperClient = curatorClient.getZookeeperClient.getZooKeeper
+
+      // FIXME: Following is a hack to start sync monitors
+      // on the zookeeper service tracker, o/w trying to access
+      // a remote service fails on the first try
+
+      try {
+        service[RemoteProcessorService]
+        service[StatefulRemoteProcessorService]
+      } catch {
+        // FIXME: No idea why the exception,
+        // org.apache.ws.commons.schema.XmlSchemaException: Schema name conflict in collection
+        //   at org.apache.ws.commons.schema.XmlSchema.<init>(XmlSchema.java:126)
+        //   at org.apache.ws.commons.schema.XmlSchema.<init>(XmlSchema.java:140)
+        //   ...
+        // is thrown
+        case xse: XmlSchemaException => // do nothing
+      }
     }
   }
 
