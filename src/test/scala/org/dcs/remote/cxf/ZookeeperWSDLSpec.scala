@@ -9,7 +9,7 @@ import org.apache.curator.test.TestingServer
 import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils
 import org.dcs.api.service.{MultiImplTestService, SingleImplTestService}
 import org.dcs.remote.cxf.ZookeeperWSDLSpec._
-import org.dcs.remote.{ZkRemoteService, ZookeeperBaseUnitSpec, ZookeeperServiceTracker}
+import org.dcs.remote.{ZookeeperBaseUnitSpec, ZookeeperServiceTracker, zkClient}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConversions.asScalaBuffer
@@ -39,8 +39,9 @@ object ZookeeperWSDLSpec {
 
   val ZookeeperServer = "localhost:2282"
 
-
+  
 }
+
 
 class ZookeeperWSDLSpec extends ZookeeperBaseUnitSpec {
 
@@ -58,11 +59,11 @@ class ZookeeperWSDLSpec extends ZookeeperBaseUnitSpec {
   }
 
   override def beforeEach(): Unit = {
-    ZkRemoteService.start
+    zkClient.start
   }
 
   override def afterEach(): Unit = {
-    ZkRemoteService.close
+    zkClient.close
   }
 
   "The Zookeeper Service Tracker" should "work in the case of services with a single implementation" in {
@@ -70,12 +71,12 @@ class ZookeeperWSDLSpec extends ZookeeperBaseUnitSpec {
 
     // Check Single Impl Test Service Impl is retrieved
 
-    var service = ZkRemoteService.service[SingleImplTestService]
+    var service = zkClient.service[SingleImplTestService]
 
     service should not be None
     assert(service.get.isInstanceOf[SingleImplTestService])    
     
-    var endpoint = ZkRemoteService.serviceEndpoint[SingleImplTestService]
+    var endpoint = zkClient.serviceEndpoint[SingleImplTestService]
     endpoint.get.serviceProxyImplName should be (None)
 
     // Delete A and B Test Service Impl nodes
@@ -89,18 +90,18 @@ class ZookeeperWSDLSpec extends ZookeeperBaseUnitSpec {
     logger.warn("Waiting for service node delete to be triggered")
     Thread.sleep(2000)
 
-    ZkRemoteService.service[SingleImplTestService] should be (None)
+    zkClient.service[SingleImplTestService] should be (None)
 
     addService("SingleImplTestServiceData.xml", SingleImplTestServicePath)
 
     logger.warn("Waiting for service node add to be triggered")
     Thread.sleep(2000)
 
-    service = ZkRemoteService.service[SingleImplTestService]
+    service = zkClient.service[SingleImplTestService]
     service should not be None
     assert(service.get.isInstanceOf[SingleImplTestService])   
     
-    endpoint = ZkRemoteService.serviceEndpoint[SingleImplTestService]
+    endpoint = zkClient.serviceEndpoint[SingleImplTestService]
     endpoint.get.serviceProxyImplName should be (None)
   }
 
@@ -108,22 +109,22 @@ class ZookeeperWSDLSpec extends ZookeeperBaseUnitSpec {
     addService("ATestServiceData.xml", ATestServicePath)
 
     // Check A Test Service Impl is retrieved
-    var service = ZkRemoteService.service[MultiImplTestService]
+    var service = zkClient.service[MultiImplTestService]
 
     service should not be None
     assert(service.get.isInstanceOf[MultiImplTestService])
     
-    var endpoint = ZkRemoteService.serviceEndpoint[MultiImplTestService]
+    var endpoint = zkClient.serviceEndpoint[MultiImplTestService]
     endpoint.get.serviceProxyImplName.get should be (ATestServiceImplName)
 
     addService("BTestServiceData.xml", BTestServicePath)
     // Check A Test Service Impl is retrieved
-    service = ZkRemoteService.service[MultiImplTestService]
+    service = zkClient.service[MultiImplTestService]
 
     service should not be None
     assert(service.get.isInstanceOf[MultiImplTestService])
     
-    endpoint = ZkRemoteService.serviceEndpoint[MultiImplTestService](BTestServiceImplName)
+    endpoint = zkClient.serviceEndpoint[MultiImplTestService](BTestServiceImplName)
     endpoint.get.serviceProxyImplName.get should be (BTestServiceImplName)
 
     // Delete A and B Test Service Impl nodes
@@ -137,19 +138,19 @@ class ZookeeperWSDLSpec extends ZookeeperBaseUnitSpec {
     logger.warn("Waiting for service node delete to be triggered")
     Thread.sleep(2000)
 
-    ZkRemoteService.service[MultiImplTestService] should be (None)
+    zkClient.service[MultiImplTestService] should be (None)
 
     addService("ATestServiceData.xml", ATestServicePath)
 
     logger.warn("Waiting for service node add to be triggered")
     Thread.sleep(2000)
 
-    service = ZkRemoteService.service[MultiImplTestService]
+    service = zkClient.service[MultiImplTestService]
 
     service should not be None
     assert(service.get.isInstanceOf[MultiImplTestService])
     
-    endpoint = ZkRemoteService.serviceEndpoint[MultiImplTestService](ATestServiceImplName)
+    endpoint = zkClient.serviceEndpoint[MultiImplTestService](ATestServiceImplName)
     endpoint.get.serviceProxyImplName.get should be (ATestServiceImplName)
   }
 
@@ -166,37 +167,41 @@ class ZookeeperWSDLSpec extends ZookeeperBaseUnitSpec {
       ZookeeperServiceTracker.StatefulRemoteServicePath + "/dcs-core#8181##cxf#org#dcs#api#service#StatefulTestService",
       StatefulTestProcessorServiceClassName)
 
-    ZkRemoteService.loadServiceCaches()
-    var pds = ZkRemoteService.services()
+    zkClient.loadServiceCaches()
+    var pds = zkClient.services()
     assert(pds.size == 2)
 
-    pds = ZkRemoteService.filterServiceByProperty(CxfEndpointUtils.TagsKey, ".*TEST.*")
-    assert(pds.size == 2)
-    assert(pds.exists(_.processorServiceClassName == StatefulTestProcessorServiceClassName))
-    assert(pds.exists(_.processorServiceClassName == StatelessTestProcessorServiceClassName))
-
-    pds = ZkRemoteService.filterServiceByProperty(CxfEndpointUtils.TagsKey, ".*state.*")
+    pds = zkClient.filterServiceByProperty(CxfEndpointUtils.TagsKey, ".*TEST.*")
     assert(pds.size == 2)
     assert(pds.exists(_.processorServiceClassName == StatefulTestProcessorServiceClassName))
     assert(pds.exists(_.processorServiceClassName == StatelessTestProcessorServiceClassName))
 
-    pds = ZkRemoteService.filterServiceByProperty(CxfEndpointUtils.TagsKey, ".*stateLESS.*")
+    pds = zkClient.filterServiceByProperty(CxfEndpointUtils.TagsKey, ".*state.*")
+    assert(pds.size == 2)
+    assert(pds.exists(_.processorServiceClassName == StatefulTestProcessorServiceClassName))
+    assert(pds.exists(_.processorServiceClassName == StatelessTestProcessorServiceClassName))
+
+    pds = zkClient.filterServiceByProperty(CxfEndpointUtils.TagsKey, ".*stateLESS.*")
     assert(pds.size == 1)
     assert(pds.head.processorServiceClassName == StatelessTestProcessorServiceClassName)
 
-    pds = ZkRemoteService.filterServiceByProperty(CxfEndpointUtils.TagsKey, ".*stateful.*")
+    pds = zkClient.filterServiceByProperty(CxfEndpointUtils.TagsKey, ".*stateful.*")
     assert(pds.size == 1)
     assert(pds.head.processorServiceClassName == StatefulTestProcessorServiceClassName)
 
-    pds = ZkRemoteService.filterServiceByProperty(CxfEndpointUtils.ProcessorTypeKey, "Worker")
+    pds = zkClient.filterServiceByProperty(CxfEndpointUtils.ProcessorTypeKey, "Worker")
     assert(pds.size == 1)
     assert(pds.head.processorServiceClassName == StatelessTestProcessorServiceClassName)
 
-    pds = ZkRemoteService.filterServiceByProperty(CxfEndpointUtils.ProcessorTypeKey, "ingestion")
+    pds = zkClient.filterServiceByProperty(CxfEndpointUtils.ProcessorTypeKey, "ingestion")
     assert(pds.size == 1)
     assert(pds.head.processorServiceClassName == StatefulTestProcessorServiceClassName)
 
-    pds = ZkRemoteService.filterServiceByProperty(CxfEndpointUtils.ProcessorTypeKey, "£$%^&")
+    pds = zkClient.filterServiceByProperty(CxfEndpointUtils.ClassNameKey, StatefulTestProcessorServiceClassName)
+    assert(pds.size == 1)
+    assert(pds.head.processorServiceClassName == StatefulTestProcessorServiceClassName)
+
+    pds = zkClient.filterServiceByProperty(CxfEndpointUtils.ProcessorTypeKey, "£$%^&")
     assert(pds.isEmpty)
   }
 }

@@ -5,26 +5,26 @@ import org.dcs.api.service.ProcessorServiceDefinition
 import org.osgi.service.remoteserviceadmin.EndpointDescription
 
 object CxfEndpointUtils {
-  private val CxfBasePath: String = "cxf/"
+	private val CxfBasePath: String = "cxf/"
 	private val AddressKey: String = "org.apache.cxf.ws.address"
-	private val EndpointIdKey: String = "endpoint.id"
-	private val ObjectClassKey: String = "objectClass"
+	val EndpointIdKey: String = "endpoint.id"
+	val ClassNameKey: String = "className"
+	val ObjectClassKey: String = "objectClass"
+	val TagsKey: String = "org.dcs.processor.tags"
+	val ProcessorTypeKey: String = "org.dcs.processor.type"
+	val StatefulServiceInterface = "org.dcs.api.service.StatefulRemoteProcessorService"
 
-  val TagsKey: String = "org.dcs.processor.tags"
-  val ProcessorTypeKey: String = "org.dcs.processor.type"
-  val StatefulServiceInterface = "org.dcs.api.service.StatefulRemoteProcessorService"
-	
-	def address(endpointDescription: EndpointDescription): String  = 
-	  endpointDescription.getProperties().get(AddressKey).asInstanceOf[String]
-	
-	def endpointId(endpointDescription: EndpointDescription): String = 
+	def address(endpointDescription: EndpointDescription): String  =
+		endpointDescription.getProperties().get(AddressKey).asInstanceOf[String]
+
+	def endpointId(endpointDescription: EndpointDescription): String =
 		endpointDescription.getProperties().get(EndpointIdKey).asInstanceOf[String]
-	
-	
+
+
 	def serviceInterfaceNames(endpointDescription: EndpointDescription): Array[String] =
 		endpointDescription.getProperties().get(ObjectClassKey).asInstanceOf[Array[String]]
-	
-	
+
+
 	def serviceProxyImplName(endpointDescription: EndpointDescription): Option[String] = {
 		serviceProxyImplName(endpointId(endpointDescription))
 	}
@@ -39,14 +39,28 @@ object CxfEndpointUtils {
 		name
 	}
 
-  def matchesPropertyValue(props: Map[String, AnyRef], property: String, regex: String): Boolean = {
-    val propertyValue = props.get(property).map(_.asInstanceOf[String])
-    if(propertyValue.isDefined) propertyValue.get.matches("(?i)" + regex) else false
-  }
+	def matchesPropertyValue(props: Map[String, AnyRef], property: String, regex: String): Boolean = {
+		val propertyValue =
+			if(property == ClassNameKey)
+				props.get(EndpointIdKey)
+			else
+				props.get(property)
+
+
+		if(propertyValue.isDefined) {
+			propertyValue.get match {
+				case s:String if property == ClassNameKey =>
+					serviceProxyImplName(s).exists(_.matches("(?i)" + regex))
+				case s:String => s.matches("(?i)" + regex)
+				case _ => false
+			}
+		} else
+			false
+	}
 
 	def toProcessorServiceDefinition(props: Map[String, AnyRef]): ProcessorServiceDefinition = {
-    ProcessorServiceDefinition(props.get(EndpointIdKey).map(_.asInstanceOf[String]).flatMap(serviceProxyImplName).get,
-      props.get(ProcessorTypeKey).map(_.asInstanceOf[String]).get,
-      props.get(ObjectClassKey).map(_.asInstanceOf[Array[String]].contains(StatefulServiceInterface)).get)
+		ProcessorServiceDefinition(props.get(EndpointIdKey).map(_.asInstanceOf[String]).flatMap(serviceProxyImplName).get,
+			props.get(ProcessorTypeKey).map(_.asInstanceOf[String]).get,
+			props.get(ObjectClassKey).map(_.asInstanceOf[Array[String]].contains(StatefulServiceInterface)).get)
 	}
 }

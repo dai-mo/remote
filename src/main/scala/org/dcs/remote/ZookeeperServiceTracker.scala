@@ -12,8 +12,9 @@ import org.apache.curator.retry.ExponentialBackoffRetry
 import org.apache.cxf.dosgi.discovery.zookeeper.subscribe.InterfaceMonitor
 import org.apache.cxf.dosgi.discovery.zookeeper.util.Utils
 import org.apache.cxf.dosgi.endpointdesc.{EndpointDescriptionParser, PropertiesMapper}
+import org.apache.ws.commons.schema.XmlSchemaException
 import org.apache.zookeeper.ZooKeeper
-import org.dcs.api.service.ProcessorServiceDefinition
+import org.dcs.api.service.{ProcessorServiceDefinition, RemoteProcessorService, StatefulRemoteProcessorService}
 import org.dcs.commons.config.{GlobalConfiguration, GlobalConfigurator}
 import org.dcs.commons.serde.YamlSerializerImplicits._
 import org.dcs.remote.ZookeeperServiceTracker._
@@ -55,11 +56,31 @@ trait ZookeeperServiceTracker extends ServiceTracker {
 
   val edParser = new EndpointDescriptionParser
 
-  def start {
+  def start: Unit = {
     if (curatorClient == null || curatorClient.getState == CuratorFrameworkState.STOPPED) {
       curatorClient = CuratorFrameworkFactory.newClient(config.zookeeperServers, retryPolicy)
       curatorClient.start()
       zooKeeperClient = curatorClient.getZookeeperClient.getZooKeeper
+
+    }
+  }
+
+  def init: Unit = {
+    // FIXME(AL-195): Following is a hack to start sync monitors
+    // on the zookeeper service tracker, o/w trying to access
+    // a remote service fails on the first try
+
+    try {
+      service[RemoteProcessorService]
+      service[StatefulRemoteProcessorService]
+    } catch {
+      // FIXME(AL-196): No idea why the exception,
+      // org.apache.ws.commons.schema.XmlSchemaException: Schema name conflict in collection
+      //   at org.apache.ws.commons.schema.XmlSchema.<init>(XmlSchema.java:126)
+      //   at org.apache.ws.commons.schema.XmlSchema.<init>(XmlSchema.java:140)
+      //   ...
+      // is thrown
+      case xse: XmlSchemaException => // do nothing
     }
   }
 
@@ -93,7 +114,7 @@ trait ZookeeperServiceTracker extends ServiceTracker {
   }
 
   def filterServiceByProperty(serviceProperties: List[Map[String, AnyRef]], property: String, regex: String): List[ProcessorServiceDefinition] = {
-  serviceProperties
+    serviceProperties
       .filter(props => CxfEndpointUtils.matchesPropertyValue(props, property, regex))
       .map(props => CxfEndpointUtils.toProcessorServiceDefinition(props))
   }
