@@ -1,6 +1,6 @@
 package org.dcs.remote
 
-import org.dcs.api.service.ProcessorServiceDefinition
+import org.dcs.api.service.{ProcessorDetails, ProcessorServiceDefinition, RemoteProcessorService}
 
 import scala.reflect.ClassTag
 
@@ -11,5 +11,6 @@ trait ServiceTracker {
   def service[T](serviceImplName: String)(implicit tag: ClassTag[T]): Option[T]
   def filterServiceByProperty(property: String, regex: String): List[ProcessorServiceDefinition]
   def services(): List[ProcessorServiceDefinition]
+
   def close
 }
