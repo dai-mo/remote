@@ -32,18 +32,18 @@ class  RemoteService {
 
   def dispose = close
 
-  override def serviceDetails(processorServiceClassName: String, stateful: Boolean): ProcessorDetails = {
+  def serviceDetails(processorServiceClassName: String, stateful: Boolean): ProcessorDetails = {
     service(processorServiceClassName, stateful).details()
   }
 
-  override def service(processorServiceClassName: String, stateful: Boolean): RemoteProcessorService = {
+  def service(processorServiceClassName: String, stateful: Boolean): RemoteProcessorService = {
     if (stateful)
       loadService[StatefulRemoteProcessorService](processorServiceClassName)
     else
       loadService[RemoteProcessorService](processorServiceClassName)
   }
 
-  override def service(processorServiceClassName: String): RemoteProcessorService = {
+  def service(processorServiceClassName: String): RemoteProcessorService = {
     val psds: List[ProcessorServiceDefinition] =
       filterServiceByProperty(CxfEndpointUtils.ClassNameKey, processorServiceClassName)
 

@@ -11,9 +11,6 @@ trait ServiceTracker {
   def service[T](serviceImplName: String)(implicit tag: ClassTag[T]): Option[T]
   def filterServiceByProperty(property: String, regex: String): List[ProcessorServiceDefinition]
   def services(): List[ProcessorServiceDefinition]
-  def serviceDetails(processorServiceClassName: String, stateful: Boolean): ProcessorDetails
-  def service(processorServiceClassName: String, stateful: Boolean): RemoteProcessorService
-  def service(processorServiceClassName: String): RemoteProcessorService
 
   def close
 }
