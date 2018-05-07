@@ -8,7 +8,7 @@ pipeline:
       - .m2
     volumes:
       - /tmp/cache:/cache
-  api:
+  remote:
     image: bigtruedata/sbt:0.13.15-2.11.8
     commands:
       - mkdir -p ~/.sbt/0.13

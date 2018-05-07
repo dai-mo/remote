@@ -3,7 +3,6 @@ import sbt._
 object Dependencies {
 
 	// Versions
-	lazy val dcsTestVersion     = "0.1.0"
 	lazy val dcsApiVersion      = "0.4.0"
 	lazy val dcsCommonsVersion  = "0.3.0"
 	lazy val servletVersion     = "3.1.0"
@@ -16,10 +15,11 @@ object Dependencies {
 	lazy val zookeeperVersion   = "3.4.7"
 	lazy val scalaTestVersion   = "2.2.6"
 	lazy val juiVersion         = "0.11"
+	lazy val mockitoVersion     = "1.10.19"
 
 
 	// Libraries
-	val dcsTest         = "org.dcs"                          % "org.dcs.test"                       % dcsTestVersion
+
 	val dcsApi          = "org.dcs"                          % "org.dcs.api"                        % dcsApiVersion
 	val dcsCommons      = "org.dcs"                          % "org.dcs.commons"                    % dcsCommonsVersion
 	val servletApi      = "javax.servlet"                    % "javax.servlet-api"                  % servletVersion
@@ -37,6 +37,7 @@ object Dependencies {
 
 	val scalaTest       = "org.scalatest"                    %% "scalatest"                         % scalaTestVersion
 	val junitInterface  = "com.novocode"                     % "junit-interface"                    % juiVersion
+	val mockitoAll      = "org.mockito"                      % "mockito-all"                        % mockitoVersion
 
 	// Dependencies
 	val remoteDependencies = Seq(
@@ -55,8 +56,9 @@ object Dependencies {
 		curatorTest,
 		zookeeper,
 
-		dcsTest         % "test",
 		scalaTest       % "test",
-		junitInterface  % "test"
+		junitInterface  % "test",
+		mockitoAll      % "test"
+
 	)
 }
