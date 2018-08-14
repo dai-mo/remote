@@ -14,6 +14,8 @@ lazy val remote = (project in file(".")).
     libraryDependencies ++= remoteDependencies
   )
 
+resolvers += Resolver.mavenLocal
+
 // ------- Versioning , Release Section --------
 
 // Build Info
